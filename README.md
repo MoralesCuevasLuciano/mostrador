@@ -36,11 +36,24 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 
 ## Estado
 
-En diseño. El modelo de datos está definido en 22 tablas y todavía no hay implementación.
+Esqueleto de aplicación en marcha. El modelo de datos está definido en 22 tablas. El backend Spring Boot conecta a MySQL; las migraciones Flyway todavía no crearon el catálogo.
 
-## Stack previsto
+## Estructura
 
-Java con Spring Boot y una base relacional. La facturación electrónica se integra por los web services de ARCA (`wsfe` para comprobantes y `ws_sr_constancia_inscripcion` para datos de contribuyentes), con entorno de homologación para desarrollo.
+- `docs/` — modelo de datos y decisiones de diseño
+- `mostrador/backend/` — API Java + Spring Boot + MySQL + Flyway
+- `mostrador/frontend/` — interfaz (todavía vacío)
+
+Para levantar el backend:
+
+```powershell
+cd mostrador/backend
+.\mvnw.cmd spring-boot:run
+```
+
+## Stack
+
+Java 21, Spring Boot 4.1, MySQL 8 y Flyway. La facturación electrónica se integra por los web services de ARCA (`wsfe` para comprobantes y `ws_sr_constancia_inscripcion` para datos de contribuyentes), con entorno de homologación para desarrollo.
 
 ## Documentación
 
