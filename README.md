@@ -41,13 +41,13 @@ Esqueleto de aplicación en marcha. El modelo de datos está definido en 22 tabl
 ## Estructura
 
 - `docs/` — modelo de datos y decisiones de diseño
-- `mostrador/backend/` — API Java + Spring Boot + MySQL + Flyway
-- `mostrador/frontend/` — interfaz (todavía vacío)
+- `backend/` — API Java + Spring Boot + MySQL + Flyway
+- `frontend/` — interfaz (todavía vacío)
 
 Para levantar el backend:
 
 ```powershell
-cd mostrador/backend
+cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
