@@ -1,6 +1,18 @@
 # Pendientes
 
-Tres categorías: lo que falta modelar, lo que espera una definición del negocio, y lo que se dejó afuera a propósito.
+Cuatro categorías: lo que falta implementar del esqueleto, lo que falta modelar, lo que espera una definición del negocio, y lo que se dejó afuera a propósito.
+
+---
+
+## Implementación en curso
+
+El backend Spring Boot ya arranca y conecta a MySQL. El frontend está vacío (`mostrador/frontend`).
+
+**Migración Flyway V1 — catálogo.** Todavía no hay scripts en `db/migration`. El primer bloque a crear en SQL es `branch`, `category`, `brand`, `product` y `product_variant`. Después las entidades JPA que las mapean.
+
+**V2 — inventario.** `stock` y `stock_movement`, cuando el catálogo ya exista.
+
+**Frontend.** Sin stack definido. Se elige cuando el catálogo tenga API usable.
 
 ---
 

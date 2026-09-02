@@ -196,6 +196,18 @@ El caché se justifica por volumen, no por simetría.
 
 ---
 
+## 17. El esquema lo versiona Flyway, no Hibernate
+
+**Problema.** Crear las tablas desde las entidades Java (`ddl-auto=update`) es rápido al prototipar y caro después: no hay historial en Git, las restricciones finas se escapan y cada entorno puede terminar con un esquema distinto.
+
+**Decisión.** Primero el SQL en Flyway, después las entidades JPA que mapean esas columnas. `spring.jpa.hibernate.ddl-auto` queda en `none` (más adelante `validate`). Motor: MySQL 8. Stack: Java 21 y Spring Boot 4.1, en `mostrador/backend`.
+
+**Alternativa descartada.** Que Hibernate cree o altere tablas al arrancar. Se descartó porque este modelo vive de unicidades, FKs y `decimal` para plata, y eso tiene que ser explícito y repetible en el servidor.
+
+**Consecuencia.** Un archivo Flyway ya aplicado no se edita: el cambio va en `V2`, `V3`, etc.
+
+---
+
 ## Sobre el alcance
 
 Varias cosas se dejaron deliberadamente afuera. Están registradas con su motivo en [pendientes.md](pendientes.md), en la sección de postergaciones. Que no estén no es un olvido: cada una se evaluó y se descartó por no justificar su costo todavía.

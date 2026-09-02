@@ -24,8 +24,8 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 
 | Módulo | Estado |
 |---|---|
-| Catálogo y variantes | Modelado |
-| Inventario por sucursal | Modelado |
+| Catálogo y variantes | Modelado; falta Flyway V1 |
+| Inventario por sucursal | Modelado; falta Flyway V2 |
 | Ventas, pagos y promociones | Modelado |
 | Facturación electrónica | Modelado |
 | Empleados y liquidaciones | Modelado |

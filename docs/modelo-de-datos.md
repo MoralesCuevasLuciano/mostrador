@@ -1,6 +1,8 @@
 # Modelo de datos
 
-22 tablas agrupadas en siete bloques. Convenciones: nombres en `snake_case` y singular, claves foráneas como `tabla_id`, baja lógica con `is_active`, y `created_at` / `updated_at` en todas las tablas (no se repiten en los listados de abajo).
+22 tablas agrupadas en siete bloques. Este documento es el contrato del esquema. Las tablas se crean con migraciones Flyway en `mostrador/backend/src/main/resources/db/migration/` (`V1__…sql`, `V2__…sql`). Hibernate no genera el esquema (`ddl-auto: none`).
+
+Convenciones: nombres en `snake_case` y singular, claves foráneas como `tabla_id`, baja lógica con `is_active`, y `created_at` / `updated_at` en todas las tablas (no se repiten en los listados de abajo).
 
 Los importes van en `decimal`, nunca en punto flotante. Los identificadores que no se usan para hacer aritmética —SKU, código de barras, número de documento— van como texto, para no perder ceros a la izquierda.
 
