@@ -28,7 +28,7 @@ Cada decisión incluye el problema real que la originó, la alternativa que se d
 
 ---
 
-## 3. El precio y el código de barras viven en la variante
+## 3. El precio, el código de barras y la marca viven en la variante
 
 **Problema.** La primera versión ponía el precio en el producto y un precio opcional en la variante que lo pisaba. Eso generaba campos aparentemente duplicados y obligaba a que toda lectura de precio resolviera una herencia.
 
@@ -37,6 +37,38 @@ Cada decisión incluye el problema real que la originó, la alternativa que se d
 **Alternativa descartada.** Precio base con override opcional. Se descartó porque la herencia se paga en cada consulta y el caso que justificaba el override —variantes con precio distinto— no ocurre en la práctica.
 
 **Sobre el código de barras.** También vive solo en la variante. Cuando toda una línea comparte el mismo código de fábrica, se carga el mismo valor en cada variante. Eso simplifica el escaneo a una sola consulta: si devuelve una fila es esa, si devuelve varias se muestra la lista para elegir.
+
+**Sobre la marca.** Estaba en el producto hasta que se definió el criterio de agrupación del punto siguiente: un producto puede reunir varias marcas, así que la marca también varía y se mudó a la variante.
+
+---
+
+## 3 bis. Los productos se agrupan por tipo de artículo, no por marca
+
+**Problema.** Los cuadernos A4 rayados son de dos marcas, con dos códigos de barras distintos, pero en la góndola están juntos y el negocio los piensa como una sola cosa. Al contar stock interesa saber cuántos cuadernos A4 rayados hay, no cuántos de cada marca.
+
+**Decisión.** El producto se define por el tipo de artículo —"Cuaderno A4 rayado"— y cada marca es una variante con su propio código de barras.
+
+**Por qué el modelo lo soportaba sin cambios.** El stock ya vivía en la variante, que es lo que permite descontar la correcta al escanear. Ver el total por producto es una consulta agregada, no una estructura distinta: en el listado se muestra el total y se puede desplegar el desglose por marca.
+
+**Lo único que cambió.** `brand_id` tuvo que mudarse de `product` a `product_variant`, porque un producto que agrupa dos marcas no puede tener una sola.
+
+**Efecto secundario.** Simplifica las promociones. Con la agrupación anterior, el "2 por $7.000" de cuadernos exigía listar ocho productos distintos en `promotion_item`; con esta, son dos. Y el conteo cruzado del escalón sigue funcionando solo, porque dos cuadernos de marcas distintas son dos variantes del mismo producto.
+
+---
+
+## 3 ter. Una unidad fallada es una variante, no un descuento
+
+**Problema.** De veinte linternas a $5.000, una anda solo enchufada y se vende a $3.500. No es una promoción: es un artículo con otro precio y otra condición.
+
+**Decisión.** Se modela como una variante más, con su propio precio y un campo `condition` que la marca como defectuosa.
+
+**Alternativa descartada.** Resolverlo con el descuento manual en la línea de venta. Se descartó porque depende de que quien atiende sepa que esa unidad vale menos y se acuerde de aplicarlo. Con variante propia, el precio está fijado de antemano y el sistema lo cobra solo.
+
+**Por qué `condition` y no un booleano de exclusión.** Acá sí conviene deducir la regla del estado, al revés que en las promociones: "una unidad fallada no entra en promoción" es universal y no hay escenario donde se quiera lo contrario. Además el campo sirve para avisar en pantalla, imprimirlo en la etiqueta y saber cuánto hay inmovilizado en mercadería fallada.
+
+**Detalles operativos.** La variante defectuosa va sin código de barras y se identifica con una etiqueta impresa con su SKU, para que el escaneo no pregunte cuál de las dos es en cada venta. Y se desactiva al llegar a stock cero, para que el catálogo no acumule variantes muertas.
+
+**Límite conocido.** Una variante representa un tipo, no una unidad individual. Si aparecen varias unidades falladas con distintos defectos y distintos precios, cada una necesita su propia variante y el modelo empieza a estirarse.
 
 ---
 
@@ -147,6 +179,10 @@ El caché se justifica por volumen, no por simetría.
 **Decisión.** Se calculan todas las opciones aplicables y se cobra la más barata. No se acumulan.
 
 **Motivo.** Es la regla más fácil de explicar en el mostrador y la única que da un resultado determinista. La excepción es el descuento manual del dueño, que se aplica sobre el mejor precio porque es una orden explícita y no una regla automática.
+
+**El descuento de empleado es un caso aparte, y depende de la promoción.** No compite con las promociones: se aplica encima de la ganadora, pero solo si esa promoción lo permite. Las que existen para incentivar que se lleven más unidades lo admiten; las que liquidan mercadería por vencimiento próximo no, porque ahí el margen ya está resignado.
+
+Por eso la regla no es global sino un booleano en cada promoción. Se descartó deducirla de un "motivo" de la promoción: el día que aparezca una promo por vencimiento que sí deba acumular, esa deducción se rompe. El booleano dice directamente lo que importa.
 
 **Detalle de precisión.** El redondeo se hace sobre el total del grupo promocional, no unidad por unidad, para que el total coincida siempre con lo que dice el cartel.
 

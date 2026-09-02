@@ -46,10 +46,6 @@ El saldo a favor convierte a `customer` en una cuenta corriente similar a la de 
 
 Ninguna afecta la estructura de las tablas: todas se resuelven en la lógica de cálculo.
 
-**¿El descuento de empleado se acumula con las promociones?** Si alguien se lleva dos alfajores que están en promoción, no está definido si corresponde el mejor de los dos beneficios o si se aplica el descuento sobre el precio ya promocional.
-
-**¿El crédito en una cuota se puede combinar con otros medios?** Está confirmado que el crédito en 2 o 3 cuotas es siempre por el total y con recargo. Falta definir el caso de una cuota, que no lleva recargo.
-
 **¿Se factura venta por venta?** Es lo recomendado y lo que resuelve de raíz el fraccionamiento manual actual, pero requiere confirmación del dueño y del contador.
 
 **¿Qué fecha lleva un comprobante emitido con días de atraso?** Hasta dónde se puede retroceder la fecha de emisión es algo a confirmar con el contador.

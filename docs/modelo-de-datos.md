@@ -58,7 +58,7 @@ El nombre se normaliza al guardar (espacios y mayúsculas) para evitar duplicado
 
 ### product
 
-La ficha comercial del artículo. No tiene precio ni stock ni código de barras: todo eso vive en la variante.
+La ficha comercial del artículo. No tiene precio, stock, marca ni código de barras: todo eso vive en la variante.
 
 | Campo | Tipo | Obligatorio |
 |---|---|---|
@@ -66,11 +66,11 @@ La ficha comercial del artículo. No tiene precio ni stock ni código de barras:
 | name | varchar | sí |
 | description | text | no |
 | category_id | FK → category | no |
-| brand_id | FK → brand | no |
 | vat_rate | decimal(5,2) | sí |
 | allows_employee_discount | boolean | sí |
 | is_active | boolean | sí |
 
+- `name` — el criterio de agrupación es el **tipo de artículo, no la marca**: "Cuaderno A4 rayado" es un producto aunque incluya dos marcas distintas con códigos de barras distintos.
 - `vat_rate` — alícuota de IVA. Por defecto 21,00 y oculta en el alta; se edita solo en los casos excepcionales.
 - `allows_employee_discount` — si admite el descuento de empleado. Se apaga en artículos de margen mínimo como cigarrillos.
 
@@ -82,18 +82,24 @@ Lo que efectivamente se vende, se escanea y se cuenta.
 |---|---|---|
 | id | PK | sí |
 | product_id | FK → product | sí |
+| brand_id | FK → brand | no |
 | sku | varchar, único | sí |
 | label | varchar | sí |
 | barcode | varchar | no |
 | price | decimal(12,2) | sí |
+| condition | varchar | sí |
 | image_url | varchar | no |
 | is_active | boolean | sí |
 
+- `brand_id` — la marca vive acá porque puede variar dentro de un mismo producto. Cuando todas las variantes comparten marca, el alta replica el mismo valor a todas.
 - `sku` — código interno autogenerado por el sistema. Existe siempre, incluso en mercadería sin código de fábrica, y sirve para imprimir una etiqueta con código de barras propio.
-- `label` — lo que distingue esta variante: "Rojo", "Frozen", o "Única" cuando el producto no varía.
+- `label` — lo que distingue esta variante: puede ser un color ("Rojo"), un diseño ("Frozen"), una marca ("Rivadavia") o "Única" cuando el producto no varía.
 - `barcode` — sin restricción de unicidad. Los duplicados se advierten en el alta pero no se bloquean.
+- `condition` — nueva o defectuosa. Permite vender una unidad fallada a precio propio sin depender de un descuento manual, y **las variantes que no están nuevas quedan fuera de toda promoción**.
 
 **Regla de aplicación:** todo producto tiene al menos una variante. Los productos que no varían se crean con una variante "Única" que la interfaz no muestra.
+
+**Sobre las variantes defectuosas:** conviene dejarles el código de barras vacío y etiquetarlas con su SKU, para que el escaneo vaya directo a esa unidad en vez de preguntar cuál de las dos es. Cuando su stock llega a cero se desactivan, así el catálogo no se llena de variantes muertas.
 
 ---
 
@@ -250,7 +256,6 @@ Una quincena pagada mitad en efectivo y mitad por transferencia son dos filas. E
 | sold_at | timestamp | sí |
 | subtotal | decimal(12,2) | sí |
 | discount_amount | decimal(12,2) | sí |
-| surcharge_amount | decimal(12,2) | sí |
 | total | decimal(12,2) | sí |
 | discount_authorized_by | FK → employee | no |
 | status | varchar | sí |
@@ -260,7 +265,7 @@ Una quincena pagada mitad en efectivo y mitad por transferencia son dos filas. E
 - `type` — normal o venta a empleado.
 - `fiscal_document_id` — el comprobante que la cubre. Vacío mientras no se facturó. La clave está de este lado porque **un comprobante puede cubrir varias ventas**.
 - `replaces_sale_id` — la venta anulada que esta corrige.
-- `total` = `subtotal` − `discount_amount` + `surcharge_amount`.
+- `total` = `subtotal` − `discount_amount` + la suma de los recargos de sus pagos. El recargo no se guarda acá porque puede aplicarse a una fracción del cobro y no al total.
 - `discount_authorized_by` — se pide solo cuando hay descuento manual.
 
 El número de comprobante interno que se imprime es el propio `id`: no tiene exigencia de correlatividad, así que no necesita secuencia propia.
@@ -292,14 +297,19 @@ El número de comprobante interno que se imprime es el propio `id`: no tiene exi
 | method | varchar | sí |
 | installments | integer | no |
 | amount | decimal(12,2) | sí |
+| surcharge_amount | decimal(12,2) | sí |
 | reference | varchar | no |
 | confirmation_status | varchar | no |
 | confirmed_at | timestamp | no |
 | confirmed_by | FK → employee | no |
 
 - `method` — efectivo, débito, crédito, transferencia, QR o cuenta de empleado.
-- `installments` — solo para crédito. Con 2 o 3 cuotas se aplica el recargo, que va en `sale.surcharge_amount`.
+- `installments` — solo para crédito. Con 2 o 3 cuotas se aplica el recargo; con una cuota, no.
+- `amount` — **lo efectivamente cobrado con ese medio, recargo incluido.** Es lo que pasa por el posnet y lo que se concilia contra la liquidación de la tarjeta.
+- `surcharge_amount` — cuánto de ese monto es recargo. Cero en todos los medios que no sean crédito en cuotas.
 - Los tres campos de confirmación reemplazan el control manual de pagos electrónicos contra la cuenta del comercio. Van vacíos para efectivo y cuenta de empleado.
+
+El recargo vive acá y no en la cabecera porque **se aplica solo sobre la fracción financiada**. Una venta de $1.000 pagada $500 en efectivo y el resto con crédito en tres cuotas genera dos filas: efectivo con monto $500 y recargo cero, y crédito con monto $575 y recargo $75. La suma da $1.075, que es el total de la venta.
 
 El medio **cuenta de empleado** no mueve plata: no afecta el arqueo y genera un movimiento en la cuenta corriente que se descuenta en la liquidación.
 
@@ -363,11 +373,14 @@ El comprobante guarda importes totales, no duplica las líneas de las ventas.
 | name | varchar | sí |
 | type | varchar | sí |
 | discount_percent | decimal(5,2) | no |
+| allows_employee_discount | boolean | sí |
 | starts_at | date | no |
 | ends_at | date | no |
 | is_active | boolean | sí |
 
 `type` es escalonada o porcentual. Las fechas son opcionales: sin fecha de fin, la promoción corre hasta que se desactive.
+
+`allows_employee_discount` define si el descuento de empleado se suma sobre el precio promocional. Las promociones que incentivan llevar más unidades lo permiten; las que liquidan mercadería por vencimiento próximo, no, porque ahí el margen ya está resignado.
 
 ### promotion_item
 
@@ -401,7 +414,9 @@ El escalón de una unidad no se carga: ese es el precio de la variante.
 
 **Cómo se aplica:** el sistema agrupa las líneas cuyos productos pertenecen a la misma promoción y suma las cantidades cruzando líneas —dos alfajores de sabores distintos cuentan como dos unidades—. Con esa cantidad busca el escalón más alto alcanzado y lo aplica a todas las unidades. El redondeo se hace sobre el total del grupo, no línea por línea.
 
-Cuando un producto cae en más de una promoción, se calculan todas y gana la más barata para el cliente. No se acumulan.
+Cuando un producto cae en más de una promoción, se calculan todas y gana la más barata para el cliente. No se acumulan entre sí. Las variantes cuya `condition` no es nueva quedan fuera de cualquier promoción.
+
+**Orden de cálculo de una línea:** se parte del precio de la variante, se aplica la mejor promoción disponible, y sobre ese resultado se aplica el descuento de empleado únicamente si la venta es de ese tipo, el producto lo admite y la promoción ganadora también. El descuento manual del dueño se aplica al final, por encima de todo, porque es una decisión explícita y no una regla automática.
 
 ---
 
@@ -469,5 +484,5 @@ Estas viven en la capa de aplicación porque implican comparar o sumar varias fi
 - La suma de `sale_payment` debe igualar `sale.total`.
 - La suma de `payroll_payment` no debería superar `payroll.net_amount`; si lo hace, se advierte y el excedente puede quedar como saldo a favor.
 - Un vale genera dos filas —una en caja y otra en la cuenta del empleado— creadas juntas.
-- Si hay un pago con crédito en 2 o 3 cuotas, ese pago es único y cubre el total.
+- El recargo por financiación se calcula sobre el monto pagado con crédito en 2 o 3 cuotas, no sobre el total de la venta.
 - Una venta de un día ya cerrado se anula y se rehace; la corrección no toca la caja de aquel día, que ya registró el descuadre.
