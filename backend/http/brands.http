@@ -1,0 +1,27 @@
+### Alta
+POST http://localhost:8080/api/brands
+Content-Type: application/json
+
+{
+  "name": "Faber-Castell"
+}
+
+### Listado
+GET http://localhost:8080/api/brands
+
+### Una marca (cambiar el id)
+GET http://localhost:8080/api/brands/1
+
+### Editar nombre
+PUT http://localhost:8080/api/brands/1
+Content-Type: application/json
+
+{
+  "name": "Faber Castell"
+}
+
+### Baja lógica
+DELETE http://localhost:8080/api/brands/1
+
+### Reactivar
+POST http://localhost:8080/api/brands/1/activate

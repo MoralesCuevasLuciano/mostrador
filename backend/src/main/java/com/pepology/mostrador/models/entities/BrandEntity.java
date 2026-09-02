@@ -38,4 +38,10 @@ public class BrandEntity {
 	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
+
+	public static BrandEntity of(String name) {
+		BrandEntity brand = new BrandEntity();
+		brand.setName(name);
+		return brand;
+	}
 }
