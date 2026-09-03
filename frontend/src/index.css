@@ -1,0 +1,255 @@
+:root {
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  background: #f4f1ea;
+}
+
+body {
+  margin: 0;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 1.5rem;
+  background: #2f332b;
+  color: #f4f1ea;
+}
+
+.nav-brand {
+  margin: 0 1rem 0 0;
+  font-weight: 600;
+  color: #f4f1ea;
+}
+
+.nav-link {
+  background: transparent;
+  color: #d5d0c6;
+  padding: 0.35rem 0.7rem;
+}
+
+.nav-link.active {
+  background: #4a5344;
+  color: #fff;
+}
+
+main {
+  max-width: 46rem;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem 3rem;
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+  color: #5c574e;
+}
+
+.error {
+  color: #8a2b2b;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e4ddd0;
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+}
+
+.card-inactive {
+  opacity: 0.65;
+}
+
+.card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  color: #7a4a12;
+  background: #f3e2c4;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.meta,
+.description {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.variants {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #5c574e;
+}
+
+.variants li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.inactive {
+  opacity: 0.6;
+}
+
+.thumb {
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #eee;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form label,
+.variant-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #5c574e;
+}
+
+.form input,
+.form textarea,
+.form select {
+  font: inherit;
+  color: #1a1a1a;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #d5cfc3;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: #8a8478;
+}
+
+.form .checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.form .checkbox input {
+  width: auto;
+}
+
+.variant-fields {
+  border: 1px solid #e4ddd0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.variant-fields legend {
+  padding: 0 0.3rem;
+  font-size: 0.8rem;
+  color: #7a7468;
+}
+
+.variant-fields .linkish {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+button {
+  font: inherit;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  background: #3d5a3d;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+button.secondary {
+  background: #fff;
+  color: #3d5a3d;
+  border: 1px solid #3d5a3d;
+}
+
+button.linkish {
+  background: none;
+  color: #8a2b2b;
+  padding: 0;
+  border: none;
+}
+
+button.link-add {
+  background: none;
+  color: #3d5a3d;
+  padding: 0.35rem 0 0;
+  border: none;
+  font-size: 0.85rem;
+}
+
+.inline-create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-top: 0.45rem;
+}
+
+.inline-create input,
+.inline-create select {
+  font: inherit;
+  color: #1a1a1a;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d5cfc3;
+  border-radius: 6px;
+  background: #fff;
+  min-width: 9rem;
+}
+
+.inline-create .error {
+  flex-basis: 100%;
+  margin: 0;
+}
