@@ -69,4 +69,27 @@ public class ProductVariantEntity {
 	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
+
+	public static ProductVariantEntity of(
+			ProductEntity product,
+			BrandEntity brand,
+			String sku,
+			String label,
+			String barcode,
+			BigDecimal price,
+			ItemCondition itemCondition,
+			String imageUrl) {
+		ProductVariantEntity variant = new ProductVariantEntity();
+		variant.setProduct(product);
+		variant.setBrand(brand);
+		variant.setSku(sku);
+		variant.setLabel(label);
+		variant.setBarcode(barcode);
+		variant.setPrice(price);
+		if (itemCondition != null) {
+			variant.setItemCondition(itemCondition);
+		}
+		variant.setImageUrl(imageUrl);
+		return variant;
+	}
 }

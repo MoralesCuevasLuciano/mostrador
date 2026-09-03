@@ -1,0 +1,91 @@
+### Alta producto simple (variante Única)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "name": "Resma A4 75g",
+  "variants": [
+    {
+      "label": "Única",
+      "price": 8500.00
+    }
+  ]
+}
+
+### Alta producto con dos marcas (cambiar categoryId y brandId)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "name": "Cuaderno A4 rayado",
+  "categoryId": 2,
+  "variants": [
+    {
+      "brandId": 2,
+      "label": "Rivadavia",
+      "barcode": "7790000000001",
+      "price": 2500.00,
+      "imageUrl": "https://ejemplo.com/rivadavia.jpg"
+    },
+    {
+      "brandId": 3,
+      "label": "Gloria",
+      "barcode": "7790000000002",
+      "price": 2300.00,
+      "imageUrl": "https://ejemplo.com/gloria.jpg"
+    }
+  ]
+}
+
+### Listado
+GET http://localhost:8080/api/products
+
+### Un producto (cambiar el id)
+GET http://localhost:8080/api/products/1
+
+### Editar ficha
+PUT http://localhost:8080/api/products/1
+Content-Type: application/json
+
+{
+  "name": "Resma A4 75g",
+  "description": "500 hojas",
+  "vatRate": 21.00,
+  "allowsEmployeeDiscount": true
+}
+
+### Agregar variante
+POST http://localhost:8080/api/products/3/variants
+Content-Type: application/json
+
+{
+  "label": "Defectuosa Rivadavia",
+  "price": 4000.00,
+  "itemCondition": "DEFECTUOSA",
+  "imageUrl": "https://ejemplo.com/rivadavia-defectuosa.jpg"
+}
+
+### Editar variante
+PUT http://localhost:8080/api/products/1/variants/1
+Content-Type: application/json
+
+{
+  "label": "Chamex",
+  "price": 8400.00,
+  "imageUrl": "https://ejemplo.com/chamex.jpg"
+}
+
+### Baja variante
+DELETE http://localhost:8080/api/products/3/variants/5
+
+### Reactivar variante
+POST http://localhost:8080/api/products/3/variants/3/activate
+
+### Baja todas las variantes
+POST http://localhost:8080/api/products/3/variants/deactivate
+
+### Baja producto
+DELETE http://localhost:8080/api/products/3
+
+### Reactivar producto
+POST http://localhost:8080/api/products/3/activate

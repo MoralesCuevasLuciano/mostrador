@@ -3,7 +3,7 @@ POST http://localhost:8080/api/brands
 Content-Type: application/json
 
 {
-  "name": "Faber-Castell"
+  "name": "Gloria"
 }
 
 ### Listado
@@ -17,7 +17,7 @@ PUT http://localhost:8080/api/brands/1
 Content-Type: application/json
 
 {
-  "name": "Faber Castell"
+  "name": "Filgo"
 }
 
 ### Baja lógica

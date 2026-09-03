@@ -55,4 +55,21 @@ public class ProductEntity {
 	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
+
+	public static ProductEntity of(
+			String name,
+			String description,
+			CategoryEntity category,
+			BigDecimal vatRate,
+			boolean allowsEmployeeDiscount) {
+		ProductEntity product = new ProductEntity();
+		product.setName(name);
+		product.setDescription(description);
+		product.setCategory(category);
+		if (vatRate != null) {
+			product.setVatRate(vatRate);
+		}
+		product.setAllowsEmployeeDiscount(allowsEmployeeDiscount);
+		return product;
+	}
 }

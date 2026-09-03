@@ -45,4 +45,11 @@ public class CategoryEntity {
 	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
+
+	public static CategoryEntity of(String name, CategoryEntity parent) {
+		CategoryEntity category = new CategoryEntity();
+		category.setName(name);
+		category.setParent(parent);
+		return category;
+	}
 }

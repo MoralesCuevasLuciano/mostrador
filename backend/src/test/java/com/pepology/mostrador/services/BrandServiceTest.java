@@ -120,4 +120,13 @@ class BrandServiceTest {
 
 		assertThrows(BusinessRuleException.class, () -> brandService.reactivate(1L));
 	}
+
+	@Test
+	void requireActiveRejectsInactive() {
+		BrandEntity brand = BrandEntity.of("BIC");
+		brand.setActive(false);
+		when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
+
+		assertThrows(BusinessRuleException.class, () -> brandService.requireActive(1L));
+	}
 }

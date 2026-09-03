@@ -79,6 +79,15 @@ public class BrandService {
 				.orElseThrow(() -> new NotFoundException("No existe la marca " + id));
 	}
 
+	@Transactional(readOnly = true)
+	public BrandEntity requireActive(Long id) {
+		BrandEntity brand = requireById(id);
+		if (!brand.isActive()) {
+			throw new BusinessRuleException("No se puede usar una marca dada de baja");
+		}
+		return brand;
+	}
+
 	private static String normalize(String name) {
 		return name.trim().replaceAll("\\s+", " ");
 	}
