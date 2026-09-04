@@ -14,7 +14,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 /**
- * Sucursal (local físico). Todavía sin API; entra cuando haya stock y caja.
+ * Sucursal (local físico). Baja lógica; el punto de venta ARCA es por local.
  */
 @Entity
 @Table(name = "branch")
@@ -50,4 +50,14 @@ public class BranchEntity {
 	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
+
+	/** Fábrica de alta. address/phone/punto de venta pueden ser null. */
+	public static BranchEntity of(String name, String address, String phone, Integer pointOfSale) {
+		BranchEntity branch = new BranchEntity();
+		branch.setName(name);
+		branch.setAddress(address);
+		branch.setPhone(phone);
+		branch.setPointOfSale(pointOfSale);
+		return branch;
+	}
 }

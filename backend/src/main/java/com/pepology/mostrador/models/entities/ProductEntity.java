@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Ficha del producto (nombre, rubro, IVA). Lo vendible es cada variante, no esta fila.
+ * Ficha del producto (nombre, rubro, IVA, si lleva inventario). Lo vendible es cada variante, no esta fila.
  */
 @Entity
 @Table(name = "product")
@@ -48,6 +48,10 @@ public class ProductEntity {
 	@Column(name = "allows_employee_discount", nullable = false)
 	private boolean allowsEmployeeDiscount = true;
 
+	/** Falso para caramelos sueltos, fotocopias y lo que no se cuenta. */
+	@Column(name = "tracks_stock", nullable = false)
+	private boolean tracksStock = true;
+
 	@Column(name = "is_active", nullable = false)
 	private boolean active = true;
 
@@ -65,7 +69,8 @@ public class ProductEntity {
 			String description,
 			CategoryEntity category,
 			BigDecimal vatRate,
-			boolean allowsEmployeeDiscount) {
+			boolean allowsEmployeeDiscount,
+			boolean tracksStock) {
 		ProductEntity product = new ProductEntity();
 		product.setName(name);
 		product.setDescription(description);
@@ -74,6 +79,7 @@ public class ProductEntity {
 			product.setVatRate(vatRate);
 		}
 		product.setAllowsEmployeeDiscount(allowsEmployeeDiscount);
+		product.setTracksStock(tracksStock);
 		return product;
 	}
 }

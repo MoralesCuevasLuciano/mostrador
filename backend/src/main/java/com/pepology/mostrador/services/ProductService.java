@@ -1,5 +1,6 @@
 package com.pepology.mostrador.services;
 
+import com.pepology.mostrador.dto.product.BarcodeMatchResponse;
 import com.pepology.mostrador.dto.product.ProductRequest;
 import com.pepology.mostrador.dto.product.ProductResponse;
 import com.pepology.mostrador.dto.product.ProductUpdateRequest;
@@ -44,14 +45,17 @@ public class ProductService {
 		String name = normalize(request.name());
 		CategoryEntity category = resolveCategory(request.categoryId());
 		boolean allowsEmployeeDiscount = request.allowsEmployeeDiscount() == null || request.allowsEmployeeDiscount();
+		boolean tracksStock = request.tracksStock() == null || request.tracksStock();
 		ProductRequest normalized = new ProductRequest(
 				name,
 				request.description(),
 				request.categoryId(),
 				request.vatRate() == null ? DEFAULT_VAT : request.vatRate(),
 				allowsEmployeeDiscount,
+				tracksStock,
 				request.variants());
-		ProductEntity saved = productRepository.save(productMapper.toEntity(normalized, category, allowsEmployeeDiscount));
+		ProductEntity saved = productRepository.save(
+				productMapper.toEntity(normalized, category, allowsEmployeeDiscount, tracksStock));
 		List<ProductVariantEntity> variants = new ArrayList<>();
 		int index = 1;
 		for (VariantRequest variantRequest : request.variants()) {
@@ -74,7 +78,25 @@ public class ProductService {
 		return toResponse(requireProduct(id));
 	}
 
-	/** Edita la ficha (nombre, descripción, rubro, IVA, descuento empleado). No toca variantes. */
+	/** Variantes que ya usan ese código de barras (el barcode no es único). */
+	@Transactional(readOnly = true)
+	public List<BarcodeMatchResponse> findBarcodeMatches(String barcode) {
+		String code = blankToNull(barcode);
+		if (code == null) {
+			return List.of();
+		}
+		return productVariantRepository.findByBarcode(code).stream()
+				.map(variant -> new BarcodeMatchResponse(
+						variant.getProduct().getId(),
+						variant.getProduct().getName(),
+						variant.getId(),
+						variant.getLabel(),
+						variant.getSku(),
+						variant.isActive()))
+				.toList();
+	}
+
+	/** Edita la ficha (nombre, descripción, rubro, IVA, descuento, si lleva inventario). No toca variantes. */
 	@Transactional
 	public ProductResponse update(Long id, ProductUpdateRequest request) {
 		ProductEntity product = requireProduct(id);
@@ -86,6 +108,9 @@ public class ProductService {
 		}
 		if (request.allowsEmployeeDiscount() != null) {
 			product.setAllowsEmployeeDiscount(request.allowsEmployeeDiscount());
+		}
+		if (request.tracksStock() != null) {
+			product.setTracksStock(request.tracksStock());
 		}
 		return toResponse(product);
 	}

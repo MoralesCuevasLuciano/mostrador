@@ -1,0 +1,34 @@
+# Llamadas de prueba a /api/branches.
+### Alta
+POST http://localhost:8080/api/branches
+Content-Type: application/json
+
+{
+  "name": "Mafalda Alberti",
+  "address": "Alberti 555",
+  "phone": "2236859158",
+  "pointOfSale": 16
+}
+
+### Listado
+GET http://localhost:8080/api/branches
+
+### Una sucursal (cambiar el id)
+GET http://localhost:8080/api/branches/1
+
+### Editar
+PUT http://localhost:8080/api/branches/1
+Content-Type: application/json
+
+{
+  "name": "Local centro",
+  "address": "San Martín 120",
+  "phone": "261-0000000",
+  "pointOfSale": 1
+}
+
+### Baja lógica
+DELETE http://localhost:8080/api/branches/1
+
+### Reactivar
+POST http://localhost:8080/api/branches/1/activate

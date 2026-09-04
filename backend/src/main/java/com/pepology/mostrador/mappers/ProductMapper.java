@@ -21,13 +21,18 @@ import java.util.List;
 public class ProductMapper {
 
 	/** Ficha de producto nueva. description vacío se guarda como null. */
-	public ProductEntity toEntity(ProductRequest request, CategoryEntity category, boolean allowsEmployeeDiscount) {
+	public ProductEntity toEntity(
+			ProductRequest request,
+			CategoryEntity category,
+			boolean allowsEmployeeDiscount,
+			boolean tracksStock) {
 		return ProductEntity.of(
 				request.name(),
 				blankToNull(request.description()),
 				category,
 				request.vatRate(),
-				allowsEmployeeDiscount);
+				allowsEmployeeDiscount,
+				tracksStock);
 	}
 
 	/** Variante nueva. El SKU lo arma el servicio, no el cliente. */
@@ -56,6 +61,7 @@ public class ProductMapper {
 				toCategorySummary(product.getCategory()),
 				product.getVatRate(),
 				product.isAllowsEmployeeDiscount(),
+				product.isTracksStock(),
 				product.isActive(),
 				variants.stream().map(this::toVariantResponse).toList());
 	}

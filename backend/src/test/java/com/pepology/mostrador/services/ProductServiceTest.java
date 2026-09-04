@@ -75,6 +75,7 @@ class ProductServiceTest {
 				null,
 				null,
 				null,
+				null,
 				List.of(new VariantRequest(
 						null,
 						"Única",
@@ -86,6 +87,7 @@ class ProductServiceTest {
 		assertEquals("Cuaderno A4", response.name());
 		assertEquals(new BigDecimal("21.00"), response.vatRate());
 		assertEquals(true, response.allowsEmployeeDiscount());
+		assertEquals(true, response.tracksStock());
 		assertEquals(1, response.variants().size());
 		assertEquals("MF-10-01", response.variants().getFirst().sku());
 		assertEquals(ItemCondition.NUEVA, response.variants().getFirst().itemCondition());
@@ -99,6 +101,7 @@ class ProductServiceTest {
 				"Cuaderno",
 				null,
 				99L,
+				null,
 				null,
 				null,
 				List.of(new VariantRequest(null, "Única", null, new BigDecimal("1.00"), null, null)))));
@@ -119,6 +122,7 @@ class ProductServiceTest {
 				null,
 				null,
 				null,
+				null,
 				List.of(new VariantRequest(5L, "Azul", null, new BigDecimal("200.00"), null, null)))));
 	}
 
@@ -131,12 +135,12 @@ class ProductServiceTest {
 
 	@Test
 	void updateChangesName() {
-		ProductEntity product = ProductEntity.of("Viejo", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Viejo", null, null, new BigDecimal("21.00"), true, true);
 		ReflectionTestUtils.setField(product, "id", 1L);
 		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 		when(productVariantRepository.findByProduct(product)).thenReturn(List.of());
 
-		var response = productService.update(1L, new ProductUpdateRequest("Nuevo", null, null, null, null));
+		var response = productService.update(1L, new ProductUpdateRequest("Nuevo", null, null, null, null, null));
 
 		assertEquals("Nuevo", product.getName());
 		assertEquals("Nuevo", response.name());
@@ -144,7 +148,7 @@ class ProductServiceTest {
 
 	@Test
 	void deactivateRejectsIfAlreadyInactive() {
-		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true, true);
 		product.setActive(false);
 		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
@@ -153,7 +157,7 @@ class ProductServiceTest {
 
 	@Test
 	void deactivateRejectsIfHasActiveVariants() {
-		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true, true);
 		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 		when(productVariantRepository.existsByProductAndActiveTrue(product)).thenReturn(true);
 
@@ -162,7 +166,7 @@ class ProductServiceTest {
 
 	@Test
 	void deactivateAllVariantsSetsThemInactive() {
-		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true, true);
 		ProductVariantEntity active = ProductVariantEntity.of(
 				product, null, "MF-1-01", "Única", null, new BigDecimal("1.00"), ItemCondition.NUEVA, null);
 		ProductVariantEntity alreadyOff = ProductVariantEntity.of(
@@ -179,7 +183,7 @@ class ProductServiceTest {
 
 	@Test
 	void updateVariantSetsImageUrl() {
-		ProductEntity product = ProductEntity.of("Resma", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Resma", null, null, new BigDecimal("21.00"), true, true);
 		ReflectionTestUtils.setField(product, "id", 1L);
 		ProductVariantEntity variant = ProductVariantEntity.of(
 				product, null, "MF-1-01", "Única", null, new BigDecimal("8500.00"), ItemCondition.NUEVA, null);
@@ -198,7 +202,7 @@ class ProductServiceTest {
 
 	@Test
 	void updateVariantKeepsImageWhenOmitted() {
-		ProductEntity product = ProductEntity.of("Resma", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Resma", null, null, new BigDecimal("21.00"), true, true);
 		ReflectionTestUtils.setField(product, "id", 1L);
 		ProductVariantEntity variant = ProductVariantEntity.of(
 				product, null, "MF-1-01", "Única", null, new BigDecimal("8500.00"), ItemCondition.NUEVA,
@@ -216,7 +220,7 @@ class ProductServiceTest {
 
 	@Test
 	void reactivateVariantSetsActive() {
-		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true, true);
 		ReflectionTestUtils.setField(product, "id", 1L);
 		ProductVariantEntity variant = ProductVariantEntity.of(
 				product, null, "MF-1-01", "Única", null, new BigDecimal("1.00"), ItemCondition.NUEVA, null);
@@ -234,7 +238,7 @@ class ProductServiceTest {
 
 	@Test
 	void reactivateVariantRejectsIfProductInactive() {
-		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true);
+		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true, true);
 		product.setActive(false);
 		ReflectionTestUtils.setField(product, "id", 1L);
 		ProductVariantEntity variant = ProductVariantEntity.of(
@@ -248,8 +252,8 @@ class ProductServiceTest {
 
 	@Test
 	void updateVariantRejectsIfBelongsToAnotherProduct() {
-		ProductEntity owner = ProductEntity.of("A", null, null, new BigDecimal("21.00"), true);
-		ProductEntity other = ProductEntity.of("B", null, null, new BigDecimal("21.00"), true);
+		ProductEntity owner = ProductEntity.of("A", null, null, new BigDecimal("21.00"), true, true);
+		ProductEntity other = ProductEntity.of("B", null, null, new BigDecimal("21.00"), true, true);
 		ReflectionTestUtils.setField(owner, "id", 1L);
 		ReflectionTestUtils.setField(other, "id", 2L);
 		ProductVariantEntity variant = ProductVariantEntity.of(
@@ -280,9 +284,57 @@ class ProductServiceTest {
 				3L,
 				null,
 				null,
+				null,
 				List.of(new VariantRequest(null, "Rivadavia", "779", new BigDecimal("2500.00"), ItemCondition.NUEVA, null))));
 
 		assertEquals("Escolar", response.category().name());
 		assertEquals("Rivadavia", response.variants().getFirst().label());
+	}
+
+	/** Caramelos sueltos y fotocopias no llevan inventario. */
+	@Test
+	void createTracksStockFalseWhenRequested() {
+		when(productRepository.save(any(ProductEntity.class))).thenAnswer(invocation -> {
+			ProductEntity product = invocation.getArgument(0);
+			ReflectionTestUtils.setField(product, "id", 11L);
+			return product;
+		});
+		when(productVariantRepository.existsBySku("MF-11-01")).thenReturn(false);
+		when(productVariantRepository.save(any(ProductVariantEntity.class))).thenAnswer(invocation -> {
+			ProductVariantEntity variant = invocation.getArgument(0);
+			ReflectionTestUtils.setField(variant, "id", 1L);
+			return variant;
+		});
+
+		var response = productService.create(new ProductRequest(
+				"Caramelos sueltos",
+				null,
+				null,
+				null,
+				null,
+				false,
+				List.of(new VariantRequest(
+						null, "Única", null, new BigDecimal("50.00"), null, null))));
+
+		assertEquals(false, response.tracksStock());
+	}
+
+	/** El barcode no es único: se lista quién ya lo usa para avisar en el alta. */
+	@Test
+	void findBarcodeMatchesReturnsOwningProduct() {
+		ProductEntity cuaderno = ProductEntity.of("Cuaderno A4 rayado", null, null, new BigDecimal("21.00"), true, true);
+		ReflectionTestUtils.setField(cuaderno, "id", 7L);
+		ProductVariantEntity variant = ProductVariantEntity.of(
+				cuaderno, null, "MF-7-01", "Rivadavia", "7790000000001", new BigDecimal("2500.00"),
+				ItemCondition.NUEVA, null);
+		ReflectionTestUtils.setField(variant, "id", 4L);
+		when(productVariantRepository.findByBarcode("7790000000001")).thenReturn(List.of(variant));
+
+		var matches = productService.findBarcodeMatches("7790000000001");
+
+		assertEquals(1, matches.size());
+		assertEquals(7L, matches.getFirst().productId());
+		assertEquals("Cuaderno A4 rayado", matches.getFirst().productName());
+		assertEquals("Rivadavia", matches.getFirst().variantLabel());
 	}
 }

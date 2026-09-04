@@ -1,21 +1,31 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useBarcodeScan } from '../hooks/useBarcodeScan'
 import { categoryOptions } from '../mappers/categoryMapper'
-import { emptyDraft, emptyVariant, productToDraft } from '../mappers/productMapper'
+import { emptyDraft, emptyVariant, productToDraft, describeBarcodeOwner } from '../mappers/productMapper'
 import type { Brand } from '../models/brand'
 import type { Category } from '../models/category'
 import type { ProductDraft, VariantDraft } from '../models/drafts'
 import type { Product } from '../models/product'
 import { fetchBrands } from '../services/brandService'
 import { fetchCategories } from '../services/categoryService'
-import { createProduct, updateProduct } from '../services/productService'
+import { createProduct, fetchBarcodeMatches, updateProduct } from '../services/productService'
 import { uploadImage } from '../services/uploadService'
+import { DoubleConfirm } from './DoubleConfirm'
 import { NewBrandField } from './NewBrandField'
 import { NewCategoryField } from './NewCategoryField'
 
 type ProductFormProps = {
   product?: Product | null
   onSaved: () => void
+}
+
+/** Conflicto de código de barras pendiente de confirmar. */
+type BarcodePending = {
+  code: string
+  index: number
+  ifCancel: ProductDraft
+  owners: string[]
+  applyOnConfirm: boolean
 }
 
 /** Formulario de ficha + variantes. Sirve para alta y para edición. */
@@ -26,12 +36,15 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
+  const [barcodePending, setBarcodePending] = useState<BarcodePending | null>(null)
   const draftRef = useRef(draft)
   const variantIndexRef = useRef(0)
   const barcodeInputRefs = useRef<Array<HTMLInputElement | null>>([])
+  const barcodeAtFocusRef = useRef<Array<string>>([])
+  const onScannedRef = useRef<(code: string, index: number, before: ProductDraft) => void>(() => undefined)
   draftRef.current = draft
 
-  useBarcodeScan(draftRef, variantIndexRef, barcodeInputRefs, setDraft)
+  useBarcodeScan(draftRef, variantIndexRef, barcodeInputRefs, onScannedRef)
 
   useEffect(() => {
     fetchBrands().then(setBrands).catch(() => undefined)
@@ -54,6 +67,73 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
       ...current,
       variants: current.variants.map((variant, i) => (i === index ? { ...variant, ...patch } : variant)),
     }))
+  }
+
+  /** Escribe el código en la variante, partiendo de un draft conocido. */
+  function applyBarcode(from: ProductDraft, index: number, code: string) {
+    setDraft({
+      ...from,
+      variants: from.variants.map((variant, i) => (i === index ? { ...variant, barcode: code } : variant)),
+    })
+  }
+
+  /** Quién más ya tiene ese código: catálogo y otras variantes de este formulario. */
+  async function ownersOf(code: string, index: number, source: ProductDraft) {
+    const currentId = source.variants[index]?.id
+    const matches = await fetchBarcodeMatches(code)
+    const fromApi = matches
+      .filter((match) => match.variantId !== currentId)
+      .map((match) => describeBarcodeOwner(match, product?.id))
+    const fromDraft = source.variants.flatMap((variant, i) => {
+      if (i === index || variant.barcode.trim() !== code) {
+        return []
+      }
+      return [`este producto, ${variant.label.trim() || `variante ${i + 1}`}`]
+    })
+    return [...new Set([...fromApi, ...fromDraft])]
+  }
+
+  /** Tras un scan: avisa si el código está repetido; si no, lo carga. */
+  async function considerScannedBarcode(code: string, index: number, before: ProductDraft) {
+    try {
+      const owners = await ownersOf(code, index, before)
+      if (owners.length === 0) {
+        applyBarcode(before, index, code)
+        return
+      }
+      setBarcodePending({ code, index, ifCancel: before, owners, applyOnConfirm: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo consultar el código de barras')
+      applyBarcode(before, index, code)
+    }
+  }
+
+  onScannedRef.current = (code, index, before) => {
+    void considerScannedBarcode(code, index, before)
+  }
+
+  /** Al salir del input: si el código cambió y ya existe, pide confirmación. */
+  async function considerTypedBarcode(index: number) {
+    const code = draft.variants[index].barcode.trim()
+    const previous = barcodeAtFocusRef.current[index] ?? ''
+    if (code === '' || code === previous) {
+      return
+    }
+    try {
+      const owners = await ownersOf(code, index, draft)
+      if (owners.length === 0) {
+        return
+      }
+      const ifCancel = {
+        ...draft,
+        variants: draft.variants.map((variant, i) =>
+          i === index ? { ...variant, barcode: previous } : variant,
+        ),
+      }
+      setBarcodePending({ code, index, ifCancel, owners, applyOnConfirm: false })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo consultar el código de barras')
+    }
   }
 
   /** Agrega una variante. Si la primera se llamaba “Única”, le borra el distintivo. */
@@ -124,6 +204,7 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
   const editing = product != null
 
   return (
+    <>
     <form className="card form" onSubmit={handleSubmit}>
       <label>
         Nombre
@@ -173,6 +254,15 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
         />
         Admite descuento de empleado
       </label>
+      <label className="checkbox">
+        <input
+          type="checkbox"
+          checked={draft.tracksStock}
+          onChange={(event) => updateDraft({ tracksStock: event.target.checked })}
+        />
+        Lleva inventario
+      </label>
+      <span className="hint">Desmarcar en caramelos sueltos, fotocopias y lo que no se cuenta.</span>
 
       {draft.variants.map((variant, index) => (
         <fieldset
@@ -237,6 +327,12 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
               maxLength={50}
               value={variant.barcode}
               onChange={(event) => updateVariant(index, { barcode: event.target.value })}
+              onFocus={() => {
+                barcodeAtFocusRef.current[index] = variant.barcode
+              }}
+              onBlur={() => {
+                void considerTypedBarcode(index)
+              }}
             />
             <span className="hint">El escáner lo completa aunque estés en otro campo.</span>
           </label>
@@ -295,5 +391,28 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
       </div>
       {error && <p className="error">{error}</p>}
     </form>
+      {barcodePending && (
+        <DoubleConfirm
+          key={`${barcodePending.code}-${barcodePending.index}`}
+          title="Código de barras repetido"
+          firstMessage={
+            barcodePending.owners.length === 1
+              ? `Este código ya lo tiene ${barcodePending.owners[0]}. ¿Estás seguro de usarlo igual?`
+              : `Este código ya lo tienen ${barcodePending.owners.join('; ')}. ¿Estás seguro de usarlo igual?`
+          }
+          secondMessage="¿Realmente estás seguro? El código de barras va a quedar repetido en más de un artículo."
+          onConfirm={() => {
+            if (barcodePending.applyOnConfirm) {
+              applyBarcode(barcodePending.ifCancel, barcodePending.index, barcodePending.code)
+            }
+            setBarcodePending(null)
+          }}
+          onCancel={() => {
+            setDraft(barcodePending.ifCancel)
+            setBarcodePending(null)
+          }}
+        />
+      )}
+    </>
   )
 }

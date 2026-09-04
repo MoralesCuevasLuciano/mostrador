@@ -23,6 +23,7 @@ export function emptyDraft(): ProductDraft {
     description: '',
     categoryId: '',
     allowsEmployeeDiscount: true,
+    tracksStock: true,
     variants: [emptyVariant()],
   }
 }
@@ -34,6 +35,7 @@ export function productToDraft(product: Product): ProductDraft {
     description: product.description ?? '',
     categoryId: product.category ? String(product.category.id) : '',
     allowsEmployeeDiscount: product.allowsEmployeeDiscount,
+    tracksStock: product.tracksStock,
     variants: product.variants.map((variant) => ({
       id: variant.id,
       brandId: variant.brand ? String(variant.brand.id) : '',
@@ -70,4 +72,17 @@ function parsePrice(value: string) {
     throw new Error('El precio tiene que ser un número mayor o igual a cero')
   }
   return price.toFixed(2)
+}
+
+/** Texto para el aviso: “Cuaderno A4” (Rivadavia) o “este producto”. */
+export function describeBarcodeOwner(
+  match: { productId: number; productName: string; variantLabel: string; active: boolean },
+  currentProductId: number | undefined,
+) {
+  const variant = match.variantLabel === 'Única' ? '' : `, ${match.variantLabel}`
+  const baja = match.active ? '' : ', dado de baja'
+  if (currentProductId != null && match.productId === currentProductId) {
+    return `este producto${variant}${baja}`
+  }
+  return `“${match.productName}”${variant}${baja}`
 }

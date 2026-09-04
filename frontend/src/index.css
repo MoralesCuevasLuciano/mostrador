@@ -253,6 +253,10 @@ p {
   gap: 0.45rem;
 }
 
+.form .checkbox + .hint {
+  margin-top: -0.35rem;
+}
+
 .form .checkbox input {
   width: auto;
 }

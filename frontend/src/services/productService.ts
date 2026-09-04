@@ -1,12 +1,21 @@
 import { toVariantPayload } from '../mappers/productMapper'
 import type { ProductDraft } from '../models/drafts'
-import type { Product } from '../models/product'
+import type { BarcodeMatch, Product } from '../models/product'
 import { getJson, sendJson } from './http'
 
 /** Llamadas a /api/products: alta, edición, baja y reactivar. */
 /** GET /api/products — catálogo completo (activos e inactivos). */
 export function fetchProducts() {
   return getJson<Product[]>('/api/products', 'No se pudo cargar el catálogo')
+}
+
+/** GET /api/products/barcode-matches — quién ya usa ese código. */
+export function fetchBarcodeMatches(barcode: string) {
+  const query = encodeURIComponent(barcode)
+  return getJson<BarcodeMatch[]>(
+    `/api/products/barcode-matches?barcode=${query}`,
+    'No se pudo consultar el código de barras',
+  )
 }
 
 /** POST /api/products — alta de ficha + variantes en un solo request. */
@@ -18,6 +27,7 @@ export function createProduct(draft: ProductDraft) {
       description: draft.description.trim() === '' ? null : draft.description.trim(),
       categoryId: draft.categoryId === '' ? null : Number(draft.categoryId),
       allowsEmployeeDiscount: draft.allowsEmployeeDiscount,
+      tracksStock: draft.tracksStock,
       variants: draft.variants.map((variant, index) => toVariantPayload(draft, variant, index)),
     }),
   })
@@ -39,6 +49,7 @@ export async function updateProduct(
       description: draft.description.trim() === '' ? null : draft.description.trim(),
       categoryId: draft.categoryId === '' ? null : Number(draft.categoryId),
       allowsEmployeeDiscount: draft.allowsEmployeeDiscount,
+      tracksStock: draft.tracksStock,
     }),
   })
 

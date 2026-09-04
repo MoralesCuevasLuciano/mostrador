@@ -13,6 +13,7 @@ public record ProductUpdateRequest(
 		String description,
 		Long categoryId,
 		@DecimalMin("0.00") @Digits(integer = 3, fraction = 2) BigDecimal vatRate,
-		Boolean allowsEmployeeDiscount
+		Boolean allowsEmployeeDiscount,
+		Boolean tracksStock
 ) {
 }

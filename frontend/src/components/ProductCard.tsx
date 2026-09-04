@@ -59,6 +59,7 @@ export function ProductCard({
           product.category?.name ?? 'Sin categoría',
           `IVA ${product.vatRate}%`,
           product.allowsEmployeeDiscount ? null : 'Sin desc. empleado',
+          product.tracksStock ? null : 'Sin inventario',
         ]
           .filter(Boolean)
           .join(' · ')}

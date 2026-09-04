@@ -13,6 +13,7 @@ public record ProductResponse(
 		CategorySummary category,
 		BigDecimal vatRate,
 		boolean allowsEmployeeDiscount,
+		boolean tracksStock,
 		boolean active,
 		List<VariantResponse> variants
 ) {

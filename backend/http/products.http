@@ -41,6 +41,9 @@ Content-Type: application/json
 ### Listado
 GET http://localhost:8080/api/products
 
+### Quién ya usa un código de barras
+GET http://localhost:8080/api/products/barcode-matches?barcode=7790000000001
+
 ### Un producto (cambiar el id)
 GET http://localhost:8080/api/products/1
 
@@ -52,7 +55,8 @@ Content-Type: application/json
   "name": "Resma A4 75g",
   "description": "500 hojas",
   "vatRate": 21.00,
-  "allowsEmployeeDiscount": true
+  "allowsEmployeeDiscount": true,
+  "tracksStock": true
 }
 
 ### Agregar variante

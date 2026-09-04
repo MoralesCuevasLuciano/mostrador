@@ -1,5 +1,6 @@
 package com.pepology.mostrador.controllers;
 
+import com.pepology.mostrador.dto.product.BarcodeMatchResponse;
 import com.pepology.mostrador.dto.product.ProductRequest;
 import com.pepology.mostrador.dto.product.ProductResponse;
 import com.pepology.mostrador.dto.product.ProductUpdateRequest;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,6 +43,12 @@ public class ProductController {
 	@GetMapping
 	public List<ProductResponse> findAll() {
 		return productService.findAll();
+	}
+
+	/** GET /api/products/barcode-matches?barcode= — quién ya usa ese código. */
+	@GetMapping("/barcode-matches")
+	public List<BarcodeMatchResponse> findBarcodeMatches(@RequestParam String barcode) {
+		return productService.findBarcodeMatches(barcode);
 	}
 
 	/** GET /api/products/{id} — un producto. */

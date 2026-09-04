@@ -17,5 +17,6 @@ export type ProductDraft = {
   description: string
   categoryId: string
   allowsEmployeeDiscount: boolean
+  tracksStock: boolean
   variants: VariantDraft[]
 }

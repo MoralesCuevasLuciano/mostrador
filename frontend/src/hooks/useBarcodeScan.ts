@@ -1,15 +1,17 @@
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
+import { useEffect, type MutableRefObject } from 'react'
 import type { ProductDraft } from '../models/drafts'
+
+type ScanHandler = (code: string, index: number, before: ProductDraft) => void
 
 /**
  * Escucha el teclado a nivel ventana y detecta ráfagas del lector de códigos
- * (dígitos muy juntos). Escribe el código en la variante que tiene el foco.
+ * (dígitos muy juntos). Entrega el código a onScanned sin escribirlo todavía.
  */
 export function useBarcodeScan(
   draftRef: MutableRefObject<ProductDraft>,
   variantIndexRef: MutableRefObject<number>,
   barcodeInputRefs: MutableRefObject<Array<HTMLInputElement | null>>,
-  setDraft: Dispatch<SetStateAction<ProductDraft>>,
+  onScannedRef: MutableRefObject<ScanHandler>,
 ) {
   useEffect(() => {
     const scanGapMs = 50
@@ -25,19 +27,14 @@ export function useBarcodeScan(
       return value.length >= minLength && /^[0-9]{8,50}$/.test(value)
     }
 
-    /** Pone el código en la variante activa y enfoca el input de barras. */
+    /** Entrega el código de la ráfaga y enfoca el input de barras. */
     function apply(code: string) {
       const before = snapshot ?? structuredClone(draftRef.current)
-      const index = Math.min(variantIndexRef.current, before.variants.length - 1)
-      setDraft({
-        ...before,
-        variants: before.variants.map((variant, i) =>
-          i === index ? { ...variant, barcode: code } : variant,
-        ),
-      })
-      window.setTimeout(() => barcodeInputRefs.current[index]?.focus(), 0)
+      const index = Math.min(variantIndexRef.current, Math.max(before.variants.length - 1, 0))
       snapshot = null
       buffer = ''
+      onScannedRef.current(code, index, before)
+      window.setTimeout(() => barcodeInputRefs.current[index]?.focus(), 0)
     }
 
     /** Captura teclas: Enter/Tab cierran el scan; teclas lentas se ignoran. */
@@ -86,5 +83,5 @@ export function useBarcodeScan(
       window.removeEventListener('keydown', onKeyDown, true)
       window.clearTimeout(idleTimer)
     }
-  }, [barcodeInputRefs, draftRef, setDraft, variantIndexRef])
+  }, [barcodeInputRefs, draftRef, onScannedRef, variantIndexRef])
 }
