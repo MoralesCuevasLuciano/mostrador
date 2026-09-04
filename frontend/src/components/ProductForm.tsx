@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useBarcodeScan } from '../hooks/useBarcodeScan'
 import { categoryOptions } from '../mappers/categoryMapper'
-import { emptyDraft, emptyVariant, productToDraft, describeBarcodeOwner } from '../mappers/productMapper'
+import { emptyDraft, emptyVariant, productToDraft, describeBarcodeOwner, variantToDraft } from '../mappers/productMapper'
 import type { Brand } from '../models/brand'
 import type { Category } from '../models/category'
 import type { ProductDraft, VariantDraft } from '../models/drafts'
 import type { Product } from '../models/product'
+import type { Variant } from '../models/variant'
 import { fetchBrands } from '../services/brandService'
 import { fetchCategories } from '../services/categoryService'
-import { createProduct, fetchBarcodeMatches, updateProduct } from '../services/productService'
+import { createProduct, fetchBarcodeMatches, reactivateVariant, updateProduct } from '../services/productService'
 import { uploadImage } from '../services/uploadService'
 import { DoubleConfirm } from './DoubleConfirm'
+import { InactiveVariantsModal } from './InactiveVariantsModal'
 import { NewBrandField } from './NewBrandField'
 import { NewCategoryField } from './NewCategoryField'
 
@@ -37,6 +39,11 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
   const [saving, setSaving] = useState(false)
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const [barcodePending, setBarcodePending] = useState<BarcodePending | null>(null)
+  const [inactiveVariants, setInactiveVariants] = useState<Variant[]>(
+    product?.variants.filter((variant) => !variant.active) ?? [],
+  )
+  const [showInactive, setShowInactive] = useState(false)
+  const [reactivatingId, setReactivatingId] = useState<number | null>(null)
   const draftRef = useRef(draft)
   const variantIndexRef = useRef(0)
   const barcodeInputRefs = useRef<Array<HTMLInputElement | null>>([])
@@ -53,6 +60,8 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
 
   useEffect(() => {
     setDraft(product ? productToDraft(product) : emptyDraft())
+    setInactiveVariants(product?.variants.filter((variant) => !variant.active) ?? [])
+    setShowInactive(false)
     setError(null)
   }, [product])
 
@@ -149,6 +158,34 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
     }))
   }
 
+  /** Reactiva una variante dada de baja y la suma al formulario. */
+  async function restoreVariant(variant: Variant) {
+    if (!product) {
+      return
+    }
+    setError(null)
+    setReactivatingId(variant.id)
+    try {
+      await reactivateVariant(product.id, variant.id)
+      setDraft((current) => {
+        const restored = variantToDraft(variant)
+        if (current.variants.length === 0) {
+          return { ...current, variants: [restored] }
+        }
+        const variants = current.variants.map((item, index) =>
+          index === 0 && item.label === 'Única' ? { ...item, label: '' } : item,
+        )
+        return { ...current, variants: [...variants, restored] }
+      })
+      setInactiveVariants((current) => current.filter((item) => item.id !== variant.id))
+      setShowInactive((open) => open && inactiveVariants.length > 1)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo reactivar la variante')
+    } finally {
+      setReactivatingId(null)
+    }
+  }
+
   /** Quita una variante. Si queda una sola, el distintivo vuelve a “Única”. */
   function removeVariant(index: number) {
     setDraft((current) => {
@@ -205,6 +242,16 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
 
   return (
     <>
+    <div className="page-header">
+      <h1>{editing ? 'Editar producto' : 'Cargar producto'}</h1>
+      {editing && inactiveVariants.length > 0 && (
+        <div className="page-actions">
+          <button type="button" className="secondary" onClick={() => setShowInactive(true)}>
+            Variantes dadas de baja ({inactiveVariants.length})
+          </button>
+        </div>
+      )}
+    </div>
     <form className="card form" onSubmit={handleSubmit}>
       <label>
         Nombre
@@ -391,6 +438,14 @@ export function ProductForm({ product, onSaved }: ProductFormProps) {
       </div>
       {error && <p className="error">{error}</p>}
     </form>
+      {showInactive && (
+        <InactiveVariantsModal
+          variants={inactiveVariants}
+          reactivatingId={reactivatingId}
+          onReactivate={(variant) => void restoreVariant(variant)}
+          onClose={() => setShowInactive(false)}
+        />
+      )}
       {barcodePending && (
         <DoubleConfirm
           key={`${barcodePending.code}-${barcodePending.index}`}

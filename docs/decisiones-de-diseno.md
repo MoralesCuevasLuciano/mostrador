@@ -60,7 +60,7 @@ Cada decisión incluye el problema real que la originó, la alternativa que se d
 
 **Problema.** De veinte linternas a $5.000, una anda solo enchufada y se vende a $3.500. No es una promoción: es un artículo con otro precio y otra condición.
 
-**Decisión.** Se modela como una variante más, con su propio precio y un campo `condition` que la marca como defectuosa.
+**Decisión.** Se modela como una variante más, con su propio precio y un campo `item_condition` (`NUEVA` / `DEFECTUOSA`) que la marca como defectuosa.
 
 **Alternativa descartada.** Resolverlo con el descuento manual en la línea de venta. Se descartó porque depende de que quien atiende sepa que esa unidad vale menos y se acuerde de aplicarlo. Con variante propia, el precio está fijado de antemano y el sistema lo cobra solo.
 
@@ -256,11 +256,11 @@ Por eso la regla no es global sino un booleano en cada promoción. Se descartó 
 
 **Problema.** Crear las tablas desde las entidades Java (`ddl-auto=update`) es rápido al prototipar y caro después: no hay historial en Git, las restricciones finas se escapan y cada entorno puede terminar con un esquema distinto.
 
-**Decisión.** Primero el SQL en Flyway, después las entidades JPA que mapean esas columnas. `spring.jpa.hibernate.ddl-auto` queda en `none` (más adelante `validate`). Motor: MySQL 8. Stack: Java 21 y Spring Boot 4.1, en `mostrador/backend`.
+**Decisión.** Primero el SQL en Flyway, después las entidades JPA que mapean esas columnas. `spring.jpa.hibernate.ddl-auto` está en `validate`. Motor: MySQL 8. Stack: Java 21 y Spring Boot 4.1, en `backend/`.
 
 **Alternativa descartada.** Que Hibernate cree o altere tablas al arrancar. Se descartó porque este modelo vive de unicidades, FKs y `decimal` para plata, y eso tiene que ser explícito y repetible en el servidor.
 
-**Consecuencia.** Un archivo Flyway ya aplicado no se edita: el cambio va en `V2`, `V3`, etc.
+**Consecuencia.** Un archivo Flyway ya aplicado no se edita: el cambio va en `V5`, etc. Hoy corren V1 (catálogo), V2 (`tracks_stock`), V3 (carga de sucursales) y V4 (`stock` y `stock_movement`). Hibernate no exige entidad para cada tabla extra; sí falla si un campo mapeado no existe en MySQL.
 
 ---
 

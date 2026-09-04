@@ -1,0 +1,57 @@
+# Llamadas de prueba a /api/stock (cambiar branchId y variantId).
+### Listado ya contado en una sucursal
+GET http://localhost:8080/api/stock/3
+
+### Saldo de una variante (sin fila = nunca se inventarió)
+GET http://localhost:8080/api/stock/3/3
+
+### Historial
+GET http://localhost:8080/api/stock/3/3/movements
+
+### Recuento (primera vez o ajuste)
+POST http://localhost:8080/api/stock/3/1/recount
+Content-Type: application/json
+
+{
+  "countedQuantity": 12,
+  "description": "primer conteo góndola escolar"
+}
+
+### Entrada
+POST http://localhost:8080/api/stock/1/1/entries
+Content-Type: application/json
+
+{
+  "quantity": 5,
+  "description": "remito proveedor"
+}
+
+### Consumo interno
+POST http://localhost:8080/api/stock/1/1/internal-consumption
+Content-Type: application/json
+
+{
+  "quantity": 1,
+  "description": "uso en el local"
+}
+
+### Extravío
+POST http://localhost:8080/api/stock/1/1/losses
+Content-Type: application/json
+
+{
+  "quantity": 1,
+  "description": "no aparece en góndola"
+}
+
+### Traslado a sucursal 2
+POST http://localhost:8080/api/stock/transfers
+Content-Type: application/json
+
+{
+  "variantId": 1,
+  "fromBranchId": 1,
+  "toBranchId": 2,
+  "quantity": 3,
+  "description": "pedido sucursal 2"
+}

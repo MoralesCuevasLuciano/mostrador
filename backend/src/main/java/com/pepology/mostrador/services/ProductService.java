@@ -201,6 +201,17 @@ public class ProductService {
 		return toResponse(variant.getProduct());
 	}
 
+	/** Para inventario: la variante tiene que existir y estar activa. */
+	@Transactional(readOnly = true)
+	public ProductVariantEntity requireActiveVariant(Long id) {
+		ProductVariantEntity variant = productVariantRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException("No existe la variante " + id));
+		if (!variant.isActive()) {
+			throw new BusinessRuleException("No se puede usar una variante dada de baja");
+		}
+		return variant;
+	}
+
 	/** Persiste una variante nueva con marca activa y SKU generado. */
 	private ProductVariantEntity saveVariant(ProductEntity product, VariantRequest request, int index) {
 		BrandEntity brand = resolveBrand(request.brandId());

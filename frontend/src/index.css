@@ -12,6 +12,7 @@ body {
 .nav {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.35rem;
   padding: 0.7rem 1.5rem;
   background: #2f332b;
@@ -33,6 +34,24 @@ body {
 .nav-link.active {
   background: #4a5344;
   color: #fff;
+}
+
+.nav-branch {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: #d5d0c6;
+}
+
+.nav-branch select {
+  font: inherit;
+  color: #fff;
+  background: #4a5344;
+  border: 1px solid #6a7464;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
 }
 
 main {
@@ -64,6 +83,7 @@ h1 {
 }
 
 .page-header + .form {
+  margin-top: 0;
   margin-bottom: 1.5rem;
 }
 
@@ -389,4 +409,71 @@ button.link-add {
   display: flex;
   justify-content: flex-end;
   gap: 0.55rem;
+}
+
+.modal-list {
+  max-width: 28rem;
+}
+
+.modal-list .inactive-variants {
+  margin: 0 0 1.1rem;
+}
+
+.modal-list .modal-actions {
+  margin-top: 0.25rem;
+}
+
+.qty {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.qty-neg {
+  color: #8a2b2b;
+}
+
+.stock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.stock-form {
+  margin-top: 0.85rem;
+}
+
+.movements {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #5c574e;
+}
+
+.movements li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid #efeae1;
+}
+
+.inactive-variants {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.inactive-variants li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #5c574e;
 }

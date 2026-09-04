@@ -32,6 +32,8 @@ export function ProductCard({
   onDeactivate,
   onReactivate,
 }: ProductCardProps) {
+  const activeVariants = product.variants.filter((variant) => variant.active)
+
   return (
     <article className={product.active ? 'card' : 'card card-inactive'}>
       <header className="card-header">
@@ -65,17 +67,16 @@ export function ProductCard({
           .join(' · ')}
       </p>
       {product.description && <p className="description">{product.description}</p>}
-      <ul className="variants">
-        {product.variants.map((variant) => (
-          <li key={variant.id} className={variant.active ? undefined : 'inactive'}>
-            <VariantThumb imageUrl={variant.imageUrl} />
-            <span>
-              {variantSummary(variant)}
-              {!variant.active && ' · Baja'}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {activeVariants.length > 0 && (
+        <ul className="variants">
+          {activeVariants.map((variant) => (
+            <li key={variant.id}>
+              <VariantThumb imageUrl={variant.imageUrl} />
+              <span>{variantSummary(variant)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </article>
   )
 }

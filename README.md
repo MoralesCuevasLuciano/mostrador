@@ -2,7 +2,7 @@
 
 Sistema de gestión para un comercio polirrubro con dos sucursales: catálogo con variantes, control de stock por sucursal, ventas con promociones, facturación electrónica ante ARCA, liquidación de personal y arqueo de caja.
 
-Hoy está en **fase 1**: el catálogo ya se puede cargar y consultar. El resto del modelo (22 tablas) está diseñado; inventario, ventas, caja y facturación todavía no tienen API ni pantalla.
+Hoy están en marcha **el catálogo y el inventario**. El resto del modelo (ventas, caja, empleados, facturación) está diseñado; todavía no tiene API ni pantalla.
 
 ## El problema
 
@@ -26,8 +26,9 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 
 | Módulo | Estado |
 |---|---|
-| Catálogo y variantes | **Implementado.** Flyway V1, API REST y UI de listado + alta |
-| Inventario por sucursal | Modelado; falta Flyway V2 y API |
+| Catálogo y variantes | **Implementado.** Flyway V1–V2, API REST y UI (listado, alta, edición, baja) |
+| Sucursales | **Implementado.** API `/api/branches`; V3 carga las dos sucursales. Switch en la barra de la UI |
+| Inventario por sucursal | **Implementado.** Flyway V4, API `/api/stock` y pantalla Inventario |
 | Ventas, pagos y promociones | Modelado |
 | Facturación electrónica | Modelado (ARCA `wsfe` + constancia de inscripción) |
 | Empleados y liquidaciones | Modelado |
@@ -36,30 +37,34 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 | Compras y proveedores | Pendiente de diseñar |
 | Devoluciones y saldo a favor | Pendiente de diseñar |
 
-La tabla `branch` ya existe en V1 (sucursal + punto de venta ARCA), pero todavía no tiene endpoints ni pantalla.
-
-## Qué hay hoy del catálogo
+## Qué hay hoy
 
 **Backend**
 
-- Tablas: `branch`, `category`, `brand`, `product`, `product_variant`
-- CRUD de marcas, categorías (rubro / subcategoría, máximo dos niveles) y productos con variantes
+- Tablas en MySQL: `branch`, `category`, `brand`, `product`, `product_variant`, `stock`, `stock_movement`
+- Flyway: `V1` catálogo, `V2` `tracks_stock`, `V3` carga de sucursales, `V4` inventario
+- CRUD de marcas, categorías (rubro / subcategoría, máximo dos niveles), productos con variantes y sucursales
+- Inventario: recuento, entrada, consumo interno, extravío, traslado entre locales, saldo e historial
 - Baja y reactivación lógica (`is_active`)
-- SKU único generado (`MF-{productId}-{nn}`); código de barras **no único** (mercadería apócrifa / mismo EAN en variantes distintas)
+- SKU único generado (`MF-{productId}-{nn}`); código de barras **no único** (aviso al escanear o al salir del campo, no bloquea)
 - Precio, marca y barcode viven en la **variante**; el producto es el tipo de artículo
+- `tracks_stock` en el producto (falso en caramelos sueltos, fotocopias, etc.)
 - IVA por defecto 21 %; flag de descuento de empleado; condición `NUEVA` / `DEFECTUOSA`
+- Subida de fotos (`/api/uploads`, máx. 5 MB)
 - Errores como `ProblemDetail` (`404` / `409`)
-- Tests unitarios de `BrandService`, `CategoryService` y `ProductService`
-- Colecciones HTTP en `backend/http/` (`brands.http`, `categories.http`, `products.http`)
+- Tests unitarios de `BrandService`, `CategoryService`, `ProductService`, `BranchService`, `StockService` y `UploadService`
+- Colecciones HTTP en `backend/http/`
 
 **Frontend**
 
-- Listado de productos (categoría, IVA, variantes, SKU, barcode, precio, baja lógica)
-- Alta de producto con N variantes
-- Alta inline de marca y categoría
-- Lectura de código de barras por teclado (pistola / buffer)
-
-La API de catálogo ya permite editar, dar de baja y reactivar; **la UI todavía no** — solo lista y crea.
+- Nav: Productos | Cargar producto | Inventario | sucursal de trabajo (arriba a la derecha, se recuerda al recargar)
+- Listado de productos activos; **Ver dados de baja** para los inactivos. Las variantes dadas de baja no se listan en la tarjeta
+- Alta y edición de producto (N variantes, foto, “Lleva inventario”)
+- En edición: botón **Variantes dadas de baja** (popup para reactivarlas)
+- Gestión de marcas y categorías desde el listado
+- Lectura de código de barras por teclado (pistola); aviso si el código ya existe
+- Inventario filtrado por la sucursal elegida: **Sin contar** y **En este local** (recuento, entrada, consumo, extravío, traslado, historial). No muestra variantes ni productos dados de baja
+- El catálogo no se filtra por sucursal: es el mismo en los dos locales
 
 ## Stack
 
@@ -70,7 +75,7 @@ La API de catálogo ya permite editar, dar de baja y reactivar; **la UI todavía
 | Frontend | React 19, TypeScript, Vite 8, CSS propio (sin router ni librería de UI) |
 | Zona horaria | `America/Argentina/Buenos_Aires` |
 
-No hay Spring Security ni OpenAPI todavía. El proxy de Vite reenvía `/api` a `http://127.0.0.1:8080`.
+No hay Spring Security ni OpenAPI todavía. El proxy de Vite reenvía `/api` y `/uploads` a `http://127.0.0.1:8080`.
 
 La facturación electrónica se integrará por los web services de ARCA (`wsfe` para comprobantes y `ws_sr_constancia_inscripcion` para datos de contribuyentes), con entorno de homologación para desarrollo. Eso es diseño, no código.
 
@@ -80,10 +85,13 @@ La facturación electrónica se integrará por los web services de ARCA (`wsfe` 
 mostrador/
 ├── docs/          modelo de datos, decisiones y pendientes
 ├── backend/       API Spring Boot + Flyway
-│   ├── http/      requests de prueba del catálogo
+│   ├── http/      requests de prueba
 │   └── src/main/resources/db/migration/
-│       └── V1__catalogo.sql
-└── frontend/      React + Vite (listado y alta de productos)
+│       ├── V1__catalogo.sql
+│       ├── V2__producto_control_de_stock.sql
+│       ├── V3__carga_sucursales.sql
+│       └── V4__stock.sql
+└── frontend/      React + Vite
 ```
 
 ## Cómo levantarlo
@@ -103,15 +111,15 @@ CREATE USER 'mostrador'@'localhost' IDENTIFIED BY 'TU_PASSWORD';
 GRANT ALL ON mostrador.* TO 'mostrador'@'localhost';
 ```
 
-En `backend/src/main/resources/application.yaml` el usuario es `mostrador` y **no hay password commiteada**. Hay que definirla, por ejemplo:
+El password **no se commitea**. Va en `backend/src/main/resources/application-local.yaml` (está en `.gitignore`):
 
-```powershell
-$env:SPRING_DATASOURCE_PASSWORD = "TU_PASSWORD"
+```yaml
+spring:
+  datasource:
+    password: TU_PASSWORD
 ```
 
-o agregarla en el YAML local (sin subirla al repo).
-
-Flyway corre `V1__catalogo.sql` al arrancar.
+Flyway corre las migraciones al arrancar (hoy hasta V4).
 
 ### 2. Backend
 
@@ -134,7 +142,7 @@ npm run dev
 
 La UI queda en el puerto por defecto de Vite ([http://localhost:5173](http://localhost:5173)) y habla con el backend vía `/api`.
 
-## API de catálogo
+## API
 
 | Recurso | Base |
 |---|---|
@@ -142,35 +150,55 @@ La UI queda en el puerto por defecto de Vite ([http://localhost:5173](http://loc
 | Categorías | `/api/categories` |
 | Productos | `/api/products` |
 | Variantes | `/api/products/{id}/variants` |
+| Sucursales | `/api/branches` |
+| Inventario | `/api/stock` |
+| Fotos | `/api/uploads` |
 
-Operaciones típicas: `POST` alta, `GET` listado/detalle, `PUT` edición, `DELETE` baja lógica, `POST …/activate` reactivación. Las variantes se agregan, editan, dan de baja y reactivan bajo el producto.
+Operaciones típicas de catálogo y sucursales: `POST` alta, `GET` listado/detalle, `PUT` edición, `DELETE` baja lógica, `POST …/activate` reactivación.
 
-El frontend hoy usa solo `GET/POST` de productos, marcas y categorías.
+Inventario (la sucursal va en la URL; el recuento y los deltas van en el body):
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| `GET` | `/api/stock/{branchId}` | Variantes ya contadas en ese local |
+| `GET` | `/api/stock/{branchId}/{variantId}` | Saldo; sin fila no es cero (`inventoried: false`) |
+| `GET` | `/api/stock/{branchId}/{variantId}/movements` | Historial |
+| `POST` | `/api/stock/{branchId}/{variantId}/recount` | Recuento (inicial o posterior) |
+| `POST` | `/api/stock/{branchId}/{variantId}/entries` | Entrada |
+| `POST` | `/api/stock/{branchId}/{variantId}/internal-consumption` | Consumo interno |
+| `POST` | `/api/stock/{branchId}/{variantId}/losses` | Extravío |
+| `POST` | `/api/stock/transfers` | Traslado entre sucursales |
+
+También: `GET /api/products/barcode-matches?barcode=` — quién ya usa ese código (no bloquea el alta).
+
+Los ids de sucursal no son fijos: `GET /api/branches` devuelve los reales (en una base que ya tenía filas, V3 puede haber insertado como 3 y 4).
 
 ## Decisiones que ya se ven en el código
 
 - Todo producto tiene **al menos una variante** (si no varía, el label es `Única` y la UI lo oculta).
 - El barcode **no es único**; el SKU sí.
-- Baja lógica, no borrado físico.
-- Esquema con **Flyway**, no con Hibernate DDL.
-- Stock (cuando exista) será por **variante × sucursal**, no por producto.
+- Baja lógica, no borrado físico. En el listado y en inventario no se muestran las variantes dadas de baja; se reactivan desde Editar.
+- Esquema con **Flyway**, no con Hibernate DDL (`validate`).
+- Stock por **variante × sucursal**. Sin fila = nunca se inventarió. El saldo solo cambia si se persiste un movimiento. Puede quedar negativo.
+- Productos con `tracks_stock = false` no entran a inventario.
+- La sucursal de la barra es **dónde se trabaja**, no un filtro del catálogo.
 
-El resto de las decisiones —venta distinta del comprobante fiscal, caja por sesión y no por vendedor, stock que puede ser negativo, promociones por lista explícita— está en [decisiones de diseño](docs/decisiones-de-diseno.md) y todavía no tiene implementación.
+El resto de las decisiones —venta distinta del comprobante fiscal, caja por sesión y no por vendedor, promociones por lista explícita— está en [decisiones de diseño](docs/decisiones-de-diseno.md) y todavía no tiene implementación.
 
 ## Plan de implementación
 
 Por fases, cada una utilizable por sí sola:
 
-1. **Catálogo e inventario.** En curso: el catálogo ya se carga a mano desde la UI. Siguiente paso: Flyway V2 (`stock`, `stock_movement`) y su API. Es la fase que más depende de trabajo humano.
+1. **Catálogo e inventario.** Hecho: se carga el catálogo, se elige sucursal y se cuenta / mueve stock. Las ventas todavía no descuentan (tipos `VENTA` / `ANULACION_VENTA` existen en el enum, sin endpoint).
 2. **Ventas y caja.** Reemplaza la planilla diaria y habilita el arqueo, que hoy no existe.
 3. **Empleados y liquidaciones.** Bastante independiente del resto.
 4. **Facturación electrónica.** Se deja para cuando el resto ya esté rodando, porque depende de terceros (puntos de venta RECE y certificado ARCA).
 5. **Compras, devoluciones y permisos.**
 
-La carga inicial del catálogo se piensa de forma incremental: los productos se dan de alta al momento de venderlos si no existen, y el inventario se cuenta por sector con el celular en vez de hacer un recuento masivo previo.
+La carga inicial del catálogo se piensa de forma incremental: los productos se dan de alta al momento de venderlos si no existen, y el inventario se cuenta por sector (pantalla **Sin contar**) en vez de un recuento masivo previo.
 
 ## Documentación
 
-- [Modelo de datos](docs/modelo-de-datos.md) — las 22 tablas con campos y relaciones. En la base, hoy existen las 5 de V1.
+- [Modelo de datos](docs/modelo-de-datos.md) — las 22 tablas del diseño. En MySQL hoy existen las 7 de V1–V4.
 - [Decisiones de diseño](docs/decisiones-de-diseno.md) — qué se decidió, qué alternativas se evaluaron y por qué.
 - [Pendientes](docs/pendientes.md) — lo que falta modelar, lo que espera confirmación y lo que se postergó a propósito.

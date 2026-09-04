@@ -1,32 +1,43 @@
-# React + TypeScript + Vite
+# Frontend de Mostrador
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + TypeScript + Vite 8. CSS propio, sin router ni librería de UI.
 
-Currently, two official plugins are available:
+## Pantallas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Productos** — listado activo o dados de baja; desde acá se gestionan marcas y categorías. Las variantes dadas de baja no se muestran en la tarjeta.
+- **Cargar / editar producto** — ficha + variantes, foto, “Lleva inventario”. En edición, un botón arriba a la derecha abre un popup para reactivar variantes dadas de baja.
+- **Inventario** — según la sucursal de la barra: pendientes de contar y ya contados. Recuento, entrada, consumo interno, extravío, traslado e historial.
 
-## React Compiler
+La sucursal de trabajo vive en la Nav (arriba a la derecha) y se guarda en `localStorage` (`mostrador.branchId`). No filtra el catálogo.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Cómo levantarlo
 
-## Expanding the Oxlint configuration
+El proxy de Vite manda `/api` y `/uploads` a `http://127.0.0.1:8080`. El backend tiene que estar corriendo.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+UI en [http://localhost:5173](http://localhost:5173).
+
+```powershell
+npm run build
+```
+
+Typecheck (`tsc -b`) y bundle de producción.
+
+## Organización
+
+```
+src/
+├── components/   tarjetas, formulario, nav, modales
+├── hooks/        sucursal de trabajo, escáner de barras
+├── mappers/      API ↔ draft del formulario
+├── models/       tipos TypeScript
+├── pages/        listados y formulario
+├── services/     llamadas a /api
+└── utils/        plata, texto, etiquetas de stock
+```
+
+Los comentarios de propósito van en español (`/** … */`).

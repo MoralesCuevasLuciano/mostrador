@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import { Nav } from './components/Nav'
+import { useBranch } from './hooks/useBranch'
 import type { Product } from './models/product'
 import { BrandListPage } from './pages/BrandListPage'
 import { CategoryListPage } from './pages/CategoryListPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductListPage } from './pages/ProductListPage'
+import { StockListPage } from './pages/StockListPage'
 
-/** Pantalla actual: catálogo, formulario, o gestión de rubros/marcas. */
-type Screen = 'list' | 'form' | 'categories' | 'brands'
+/** Pantalla actual: catálogo, formulario, rubros/marcas o inventario. */
+type Screen = 'list' | 'form' | 'categories' | 'brands' | 'stock'
 
-/** Shell de la app: barra de navegación y la pantalla activa. */
+/** Shell de la app: barra de navegación, sucursal activa y la pantalla. */
 export default function App() {
   const [screen, setScreen] = useState<Screen>('list')
   const [editing, setEditing] = useState<Product | null>(null)
+  const { activeBranches, selected, selectBranch, error, loading } = useBranch()
 
   /** Abre el formulario vacío para un producto nuevo. */
   function openCreate() {
@@ -32,21 +35,35 @@ export default function App() {
     setScreen('list')
   }
 
+  const otherBranches = activeBranches.filter((branch) => branch.id !== selected?.id)
+
   return (
     <>
       <Nav
         listActive={screen === 'list' || screen === 'categories' || screen === 'brands'}
         createActive={screen === 'form' && !editing}
+        inventoryActive={screen === 'stock'}
         onList={goToList}
         onCreate={openCreate}
+        onInventory={() => {
+          setEditing(null)
+          setScreen('stock')
+        }}
+        branches={activeBranches}
+        selectedBranchId={selected?.id ?? null}
+        onSelectBranch={selectBranch}
+        branchesLoading={loading}
       />
       <main>
+        {error && <p className="error">{error}</p>}
         {screen === 'form' ? (
           <ProductFormPage product={editing} onSaved={goToList} />
         ) : screen === 'categories' ? (
           <CategoryListPage onBack={goToList} />
         ) : screen === 'brands' ? (
           <BrandListPage onBack={goToList} />
+        ) : screen === 'stock' ? (
+          <StockListPage branch={selected} otherBranches={otherBranches} />
         ) : (
           <ProductListPage
             onEdit={openEdit}

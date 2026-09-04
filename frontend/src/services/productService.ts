@@ -83,6 +83,15 @@ export async function deactivateProduct(id: number): Promise<void> {
   await sendJson(`/api/products/${id}`, 'No se pudo dar de baja el producto', { method: 'DELETE' })
 }
 
+/** POST /api/products/{id}/variants/{variantId}/activate — una variante. */
+export function reactivateVariant(productId: number, variantId: number) {
+  return sendJson<Product>(
+    `/api/products/${productId}/variants/${variantId}/activate`,
+    'No se pudo reactivar la variante',
+    { method: 'POST' },
+  )
+}
+
 /** Reactiva el producto y todas las variantes que estaban dadas de baja. */
 export async function reactivateProduct(product: Product): Promise<void> {
   await sendJson(`/api/products/${product.id}/activate`, 'No se pudo reactivar el producto', {

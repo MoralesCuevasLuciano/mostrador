@@ -6,11 +6,11 @@ Cuatro categorías: lo que falta implementar del esqueleto, lo que falta modelar
 
 ## Implementación en curso
 
-El catálogo ya está en producción local: Flyway `V1__catalogo.sql`, entidades JPA, API REST (`/api/brands`, `/api/categories`, `/api/products`) y frontend React (listado y alta de productos, alta inline de marca y categoría).
+**Hecho (catálogo + sucursales + inventario).** Flyway V1–V4. API de marcas, categorías, productos, sucursales y stock. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario (sin contar / ya contado, recuento, entrada, consumo, extravío, traslado, historial).
 
-**V2 — inventario.** Siguiente bloque: `stock` y `stock_movement`, más API y pantallas. `branch` ya está en V1 pero sin endpoints.
+**Siguiente bloque: ventas y caja.** Todavía no hay tablas ni API. Cuando existan, la venta va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`.
 
-**Frontend.** React 19 + Vite 8. Falta UI de edición, baja y reactivación (la API de catálogo ya las expone).
+**Inventario que queda para más adelante.** `min_quantity` está en la tabla y no se edita en la UI. Ventas que dejen saldo negativo (la regla ya está: no se bloquea).
 
 ---
 
@@ -26,7 +26,7 @@ Operaciones que claramente no debería poder hacer cualquiera: ver las liquidaci
 
 ### Compras y proveedores
 
-La mercadería hoy entra sin registro. El modelo ya contempla un movimiento de stock de tipo entrada, que funciona sin depender de este bloque —una decisión intencional, para que el inventario pueda arrancar antes de tener el circuito completo de compras.
+La mercadería hoy entra sin registro de compra. El inventario ya contempla un movimiento de tipo `ENTRADA`, que funciona sin depender de este bloque —una decisión intencional, para que el inventario pueda arrancar antes de tener el circuito completo de compras.
 
 Falta modelar el proveedor, el comprobante de compra y el precio de costo, que es lo que después habilita calcular margen.
 
@@ -36,7 +36,7 @@ Es el bloque más grande de los tres, porque toca tres cosas a la vez: el stock,
 
 El saldo a favor convierte a `customer` en una cuenta corriente similar a la de empleados, con movimientos y saldo. Hoy esa tabla es mínima porque solo contiene a quienes piden factura.
 
-`fiscal_document.related_document_id` ya existe para que una nota de crédito apunte a la factura que corrige.
+`fiscal_document.related_document_id` ya existe en el diseño para que una nota de crédito apunte a la factura que corrige.
 
 ---
 

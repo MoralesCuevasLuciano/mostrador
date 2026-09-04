@@ -1,6 +1,8 @@
 # Modelo de datos
 
-22 tablas agrupadas en siete bloques. Este documento es el contrato del esquema. Las tablas se crean con migraciones Flyway en `mostrador/backend/src/main/resources/db/migration/` (`V1__…sql`, `V2__…sql`). Hibernate no genera el esquema (`ddl-auto: none`).
+22 tablas agrupadas en siete bloques. Este documento es el contrato del esquema. Las tablas se crean con migraciones Flyway en `backend/src/main/resources/db/migration/`. Hibernate no genera el esquema (`ddl-auto: validate`).
+
+**En MySQL hoy (V1–V4):** `branch`, `category`, `brand`, `product`, `product_variant`, `stock`, `stock_movement`. El resto de este documento es diseño: todavía no tiene migración.
 
 Convenciones: nombres en `snake_case` y singular, claves foráneas como `tabla_id`, baja lógica con `is_active`, y `created_at` / `updated_at` en todas las tablas (no se repiten en los listados de abajo).
 
@@ -89,7 +91,7 @@ Lo que efectivamente se vende, se escanea y se cuenta.
 | label | varchar | sí |
 | barcode | varchar | no |
 | price | decimal(12,2) | sí |
-| condition | varchar | sí |
+| item_condition | varchar | sí |
 | image_url | varchar | no |
 | is_active | boolean | sí |
 
@@ -97,7 +99,7 @@ Lo que efectivamente se vende, se escanea y se cuenta.
 - `sku` — código interno autogenerado por el sistema. Existe siempre, incluso en mercadería sin código de fábrica, y sirve para imprimir una etiqueta con código de barras propio.
 - `label` — lo que distingue esta variante: puede ser un color ("Rojo"), un diseño ("Frozen"), una marca ("Rivadavia") o "Única" cuando el producto no varía.
 - `barcode` — sin restricción de unicidad. Los duplicados se advierten en el alta pero no se bloquean.
-- `condition` — nueva o defectuosa. Permite vender una unidad fallada a precio propio sin depender de un descuento manual, y **las variantes que no están nuevas quedan fuera de toda promoción**.
+- `item_condition` — `NUEVA` o `DEFECTUOSA`. Permite vender una unidad fallada a precio propio sin depender de un descuento manual, y **las variantes que no están nuevas quedan fuera de toda promoción**.
 
 **Regla de aplicación:** todo producto tiene al menos una variante. Los productos que no varían se crean con una variante "Única" que la interfaz no muestra.
 
@@ -126,26 +128,26 @@ El saldo actual.
 
 ### stock_movement
 
-El historial que explica el saldo.
+El historial que explica el saldo. **V4 ya existe** (sin `sale_id` ni `registered_by`: se agregan cuando existan esas tablas).
 
-| Campo | Tipo | Obligatorio |
-|---|---|---|
-| id | PK | sí |
-| product_variant_id | FK → product_variant | sí |
-| branch_id | FK → branch | sí |
-| type | varchar | sí |
-| quantity | integer | sí |
-| sale_id | FK → sale | no |
-| related_movement_id | FK → stock_movement | no |
-| description | varchar | no |
-| registered_by | FK → employee | no |
-| movement_at | timestamp | sí |
+| Campo | Tipo | Obligatorio | En V4 |
+|---|---|---|---|
+| id | PK | sí | sí |
+| product_variant_id | FK → product_variant | sí | sí |
+| branch_id | FK → branch | sí | sí |
+| movement_type | varchar(30) | sí | sí |
+| quantity | integer | sí | sí |
+| related_movement_id | FK → stock_movement | no | sí |
+| description | varchar | no | sí |
+| movement_at | timestamp | sí | sí |
+| sale_id | FK → sale | no | no (cuando exista venta) |
+| registered_by | FK → employee | no | no (cuando exista empleado) |
 
-- `type` — venta, anulación de venta, ajuste inicial, ajuste por recuento, consumo interno, traslado, entrada de mercadería, rotura o pérdida.
+- `movement_type` — valores actuales: `VENTA`, `ANULACION_VENTA`, `AJUSTE_INICIAL`, `AJUSTE_RECUENTO`, `CONSUMO_INTERNO`, `TRASLADO`, `ENTRADA`, `EXTRAVÍO`. Hoy la API usa todos menos venta / anulación.
 - `quantity` — con signo: negativo cuando sale, positivo cuando entra.
 - `related_movement_id` — vincula las dos patas de un traslado entre sucursales.
 
-**Regla de aplicación:** el saldo de `stock` nunca se escribe directamente. Siempre se registra un movimiento y el movimiento actualiza el saldo, en la misma transacción. Eso permite recalcular cualquier saldo desde cero.
+**Regla de aplicación:** el saldo de `stock` nunca se escribe directamente. Siempre se registra un movimiento y el movimiento actualiza el saldo, en la misma transacción. Eso permite recalcular cualquier saldo desde cero. El recuento guarda la **diferencia** respecto del saldo actual (o de 0 si no había fila): primera vez `AJUSTE_INICIAL`, después `AJUSTE_RECUENTO`.
 
 ---
 
@@ -416,7 +418,7 @@ El escalón de una unidad no se carga: ese es el precio de la variante.
 
 **Cómo se aplica:** el sistema agrupa las líneas cuyos productos pertenecen a la misma promoción y suma las cantidades cruzando líneas —dos alfajores de sabores distintos cuentan como dos unidades—. Con esa cantidad busca el escalón más alto alcanzado y lo aplica a todas las unidades. El redondeo se hace sobre el total del grupo, no línea por línea.
 
-Cuando un producto cae en más de una promoción, se calculan todas y gana la más barata para el cliente. No se acumulan entre sí. Las variantes cuya `condition` no es nueva quedan fuera de cualquier promoción.
+Cuando un producto cae en más de una promoción, se calculan todas y gana la más barata para el cliente. No se acumulan entre sí. Las variantes cuya `item_condition` no es nueva quedan fuera de cualquier promoción.
 
 **Orden de cálculo de una línea:** se parte del precio de la variante, se aplica la mejor promoción disponible, y sobre ese resultado se aplica el descuento de empleado únicamente si la venta es de ese tipo, el producto lo admite y la promoción ganadora también. El descuento manual del dueño se aplica al final, por encima de todo, porque es una decisión explícita y no una regla automática.
 

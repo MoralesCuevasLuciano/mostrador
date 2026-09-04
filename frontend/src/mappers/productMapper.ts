@@ -1,5 +1,6 @@
 import type { ProductDraft, VariantDraft } from '../models/drafts'
 import type { Product } from '../models/product'
+import type { Variant } from '../models/variant'
 import { blankToNull } from '../utils/text'
 
 /** Convierte entre el producto de la API y el draft del formulario. */
@@ -28,7 +29,20 @@ export function emptyDraft(): ProductDraft {
   }
 }
 
-/** Pasa un producto de la API al estado del formulario de edición. */
+/** Variante de la API → draft del formulario. */
+export function variantToDraft(variant: Variant): VariantDraft {
+  return {
+    id: variant.id,
+    brandId: variant.brand ? String(variant.brand.id) : '',
+    label: variant.label,
+    barcode: variant.barcode ?? '',
+    price: String(variant.price),
+    itemCondition: variant.itemCondition,
+    imageUrl: variant.imageUrl ?? '',
+  }
+}
+
+/** Pasa un producto de la API al formulario. Solo las variantes activas se editan. */
 export function productToDraft(product: Product): ProductDraft {
   return {
     name: product.name,
@@ -36,15 +50,7 @@ export function productToDraft(product: Product): ProductDraft {
     categoryId: product.category ? String(product.category.id) : '',
     allowsEmployeeDiscount: product.allowsEmployeeDiscount,
     tracksStock: product.tracksStock,
-    variants: product.variants.map((variant) => ({
-      id: variant.id,
-      brandId: variant.brand ? String(variant.brand.id) : '',
-      label: variant.label,
-      barcode: variant.barcode ?? '',
-      price: String(variant.price),
-      itemCondition: variant.itemCondition,
-      imageUrl: variant.imageUrl ?? '',
-    })),
+    variants: product.variants.filter((variant) => variant.active).map(variantToDraft),
   }
 }
 

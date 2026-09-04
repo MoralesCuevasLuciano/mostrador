@@ -337,4 +337,22 @@ class ProductServiceTest {
 		assertEquals("Cuaderno A4 rayado", matches.getFirst().productName());
 		assertEquals("Rivadavia", matches.getFirst().variantLabel());
 	}
+
+	@Test
+	void requireActiveVariantRejectsInactive() {
+		ProductEntity product = ProductEntity.of("Cuaderno", null, null, new BigDecimal("21.00"), true, true);
+		ProductVariantEntity variant = ProductVariantEntity.of(
+				product, null, "MF-1-01", "Única", null, new BigDecimal("1.00"), ItemCondition.NUEVA, null);
+		variant.setActive(false);
+		when(productVariantRepository.findById(2L)).thenReturn(Optional.of(variant));
+
+		assertThrows(BusinessRuleException.class, () -> productService.requireActiveVariant(2L));
+	}
+
+	@Test
+	void requireActiveVariantThrowsWhenMissing() {
+		when(productVariantRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThrows(NotFoundException.class, () -> productService.requireActiveVariant(99L));
+	}
 }

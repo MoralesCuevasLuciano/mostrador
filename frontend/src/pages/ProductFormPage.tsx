@@ -6,12 +6,7 @@ type ProductFormPageProps = {
   onSaved: () => void
 }
 
-/** Título + formulario de alta o edición. */
+/** Página de alta o edición: el formulario arma el encabezado. */
 export function ProductFormPage({ product, onSaved }: ProductFormPageProps) {
-  return (
-    <>
-      <h1>{product ? 'Editar producto' : 'Cargar producto'}</h1>
-      <ProductForm key={product?.id ?? 'new'} product={product} onSaved={onSaved} />
-    </>
-  )
+  return <ProductForm key={product?.id ?? 'new'} product={product} onSaved={onSaved} />
 }
