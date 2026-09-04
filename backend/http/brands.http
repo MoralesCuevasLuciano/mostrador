@@ -1,3 +1,4 @@
+# Llamadas de prueba a /api/brands (REST Client de VS Code / Cursor).
 ### Alta
 POST http://localhost:8080/api/brands
 Content-Type: application/json

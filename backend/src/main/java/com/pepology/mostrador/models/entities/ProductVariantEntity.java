@@ -20,6 +20,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Unidad vendible: SKU, precio, foto, código de barras y estado (nueva/defectuosa).
+ */
 @Entity
 @Table(name = "product_variant")
 @Getter
@@ -70,6 +73,7 @@ public class ProductVariantEntity {
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
 
+	/** Fábrica de alta. El SKU lo genera el servicio, no el cliente. */
 	public static ProductVariantEntity of(
 			ProductEntity product,
 			BrandEntity brand,

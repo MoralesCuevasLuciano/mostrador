@@ -23,6 +23,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests de CategoryService: dos niveles, unicidad por padre, baja con hijas.
+ */
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
 

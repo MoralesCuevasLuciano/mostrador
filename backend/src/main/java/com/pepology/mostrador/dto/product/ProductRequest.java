@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
+/** Body de alta de producto. Tiene que traer al menos una variante. */
 public record ProductRequest(
 		@NotBlank @Size(max = 200) String name,
 		String description,

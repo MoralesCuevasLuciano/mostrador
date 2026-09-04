@@ -3,6 +3,7 @@ package com.pepology.mostrador;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+/** Smoke test: el contexto Spring arranca. */
 @SpringBootTest
 class MostradorApplicationTests {
 

@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Acceso a product_variant. El barcode no es único: varios pueden compartir código.
+ */
 public interface ProductVariantRepository extends JpaRepository<ProductVariantEntity, Long> {
 
 	Optional<ProductVariantEntity> findBySku(String sku);
@@ -17,5 +20,6 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariantEn
 
 	boolean existsBySku(String sku);
 
+	/** True si el producto todavía tiene variantes activas (bloquea la baja). */
 	boolean existsByProductAndActiveTrue(ProductEntity product);
 }

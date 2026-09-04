@@ -14,9 +14,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Convierte producto/variante entre request, entidad y response.
+ */
 @Component
 public class ProductMapper {
 
+	/** Ficha de producto nueva. description vacío se guarda como null. */
 	public ProductEntity toEntity(ProductRequest request, CategoryEntity category, boolean allowsEmployeeDiscount) {
 		return ProductEntity.of(
 				request.name(),
@@ -26,6 +30,7 @@ public class ProductMapper {
 				allowsEmployeeDiscount);
 	}
 
+	/** Variante nueva. El SKU lo arma el servicio, no el cliente. */
 	public ProductVariantEntity toVariantEntity(
 			VariantRequest request,
 			ProductEntity product,
@@ -42,6 +47,7 @@ public class ProductMapper {
 				blankToNull(request.imageUrl()));
 	}
 
+	/** Producto + lista de variantes → JSON de catálogo. */
 	public ProductResponse toResponse(ProductEntity product, List<ProductVariantEntity> variants) {
 		return new ProductResponse(
 				product.getId(),
@@ -54,6 +60,7 @@ public class ProductMapper {
 				variants.stream().map(this::toVariantResponse).toList());
 	}
 
+	/** Una variante → JSON (incluye resumen de marca). */
 	public VariantResponse toVariantResponse(ProductVariantEntity variant) {
 		return new VariantResponse(
 				variant.getId(),
@@ -67,6 +74,7 @@ public class ProductMapper {
 				toBrandSummary(variant.getBrand()));
 	}
 
+	/** Rubro reducido a id + nombre, o null. */
 	private static CategorySummary toCategorySummary(CategoryEntity category) {
 		if (category == null) {
 			return null;
@@ -74,6 +82,7 @@ public class ProductMapper {
 		return new CategorySummary(category.getId(), category.getName());
 	}
 
+	/** Marca reducida a id + nombre, o null. */
 	private static BrandSummary toBrandSummary(BrandEntity brand) {
 		if (brand == null) {
 			return null;
@@ -81,6 +90,7 @@ public class ProductMapper {
 		return new BrandSummary(brand.getId(), brand.getName());
 	}
 
+	/** Cadena vacía o solo espacios → null. */
 	private static String blankToNull(String value) {
 		if (value == null) {
 			return null;

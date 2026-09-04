@@ -13,6 +13,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * Fila de la tabla brand. El nombre es único; la baja es lógica (is_active).
+ */
 @Entity
 @Table(name = "brand")
 @Getter
@@ -39,6 +42,7 @@ public class BrandEntity {
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
 
+	/** Fábrica para un alta: solo el nombre; el resto lo completa MySQL. */
 	public static BrandEntity of(String name) {
 		BrandEntity brand = new BrandEntity();
 		brand.setName(name);

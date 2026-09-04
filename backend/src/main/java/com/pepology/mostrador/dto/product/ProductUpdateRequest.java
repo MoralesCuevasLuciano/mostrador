@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/** Body de edición de la ficha. No incluye variantes. */
 public record ProductUpdateRequest(
 		@NotBlank @Size(max = 200) String name,
 		String description,

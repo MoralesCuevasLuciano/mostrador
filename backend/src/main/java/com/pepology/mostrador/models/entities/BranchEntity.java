@@ -13,6 +13,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * Sucursal (local físico). Todavía sin API; entra cuando haya stock y caja.
+ */
 @Entity
 @Table(name = "branch")
 @Getter

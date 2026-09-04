@@ -22,6 +22,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Catálogo: ficha de producto más variantes (SKU, precio, foto, código de barras).
+ * No toca repositorios de marca ni categoría: pide las entidades activas a sus servicios.
+ */
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -34,6 +38,7 @@ public class ProductService {
 	private final BrandService brandService;
 	private final ProductMapper productMapper;
 
+	/** Alta de producto con al menos una variante. IVA por defecto 21 %. */
 	@Transactional
 	public ProductResponse create(ProductRequest request) {
 		String name = normalize(request.name());
@@ -55,6 +60,7 @@ public class ProductService {
 		return productMapper.toResponse(saved, variants);
 	}
 
+	/** Listado ordenado por nombre, con todas las variantes de cada producto. */
 	@Transactional(readOnly = true)
 	public List<ProductResponse> findAll() {
 		return productRepository.findAll(Sort.by("name")).stream()
@@ -62,11 +68,13 @@ public class ProductService {
 				.toList();
 	}
 
+	/** Un producto por id, con sus variantes. 404 si no existe. */
 	@Transactional(readOnly = true)
 	public ProductResponse findById(Long id) {
 		return toResponse(requireProduct(id));
 	}
 
+	/** Edita la ficha (nombre, descripción, rubro, IVA, descuento empleado). No toca variantes. */
 	@Transactional
 	public ProductResponse update(Long id, ProductUpdateRequest request) {
 		ProductEntity product = requireProduct(id);
@@ -82,6 +90,7 @@ public class ProductService {
 		return toResponse(product);
 	}
 
+	/** Baja lógica del producto. Primero hay que dar de baja todas las variantes. */
 	@Transactional
 	public ProductResponse deactivate(Long id) {
 		ProductEntity product = requireProduct(id);
@@ -95,6 +104,7 @@ public class ProductService {
 		return toResponse(product);
 	}
 
+	/** Reactiva el producto. Las variantes siguen como estaban. */
 	@Transactional
 	public ProductResponse reactivate(Long id) {
 		ProductEntity product = requireProduct(id);
@@ -105,6 +115,7 @@ public class ProductService {
 		return toResponse(product);
 	}
 
+	/** Da de baja todas las variantes activas de un producto (paso previo a bajar el producto). */
 	@Transactional
 	public ProductResponse deactivateAllVariants(Long productId) {
 		ProductEntity product = requireProduct(productId);
@@ -114,6 +125,7 @@ public class ProductService {
 		return toResponse(product);
 	}
 
+	/** Agrega una variante y le asigna el próximo SKU libre (MF-{id}-NN). */
 	@Transactional
 	public ProductResponse addVariant(Long productId, VariantRequest request) {
 		ProductEntity product = requireProduct(productId);
@@ -122,6 +134,7 @@ public class ProductService {
 		return toResponse(product);
 	}
 
+	/** Edita una variante. imageUrl null significa “no tocar la foto actual”. */
 	@Transactional
 	public ProductResponse updateVariant(Long productId, Long variantId, VariantRequest request) {
 		ProductVariantEntity variant = requireVariantOfProduct(productId, variantId);
@@ -138,6 +151,7 @@ public class ProductService {
 		return toResponse(variant.getProduct());
 	}
 
+	/** Baja lógica de una variante. */
 	@Transactional
 	public ProductResponse deactivateVariant(Long productId, Long variantId) {
 		ProductVariantEntity variant = requireVariantOfProduct(productId, variantId);
@@ -148,6 +162,7 @@ public class ProductService {
 		return toResponse(variant.getProduct());
 	}
 
+	/** Reactiva una variante. El producto tiene que estar activo. */
 	@Transactional
 	public ProductResponse reactivateVariant(Long productId, Long variantId) {
 		ProductVariantEntity variant = requireVariantOfProduct(productId, variantId);
@@ -161,12 +176,14 @@ public class ProductService {
 		return toResponse(variant.getProduct());
 	}
 
+	/** Persiste una variante nueva con marca activa y SKU generado. */
 	private ProductVariantEntity saveVariant(ProductEntity product, VariantRequest request, int index) {
 		BrandEntity brand = resolveBrand(request.brandId());
 		String sku = nextSku(product.getId(), index);
 		return productVariantRepository.save(productMapper.toVariantEntity(request, product, brand, sku));
 	}
 
+	/** Primer SKU MF-{productId}-NN que no exista (por si ya hay uno ocupado). */
 	private String nextSku(Long productId, int startIndex) {
 		int index = startIndex;
 		String sku;
@@ -176,23 +193,28 @@ public class ProductService {
 		return sku;
 	}
 
+	/** Arma el DTO incluyendo las variantes del producto. */
 	private ProductResponse toResponse(ProductEntity product) {
 		return productMapper.toResponse(product, productVariantRepository.findByProduct(product));
 	}
 
+	/** Categoría activa o null si no se indicó. */
 	private CategoryEntity resolveCategory(Long categoryId) {
 		return categoryId == null ? null : categoryService.requireActive(categoryId);
 	}
 
+	/** Marca activa o null si no se indicó. */
 	private BrandEntity resolveBrand(Long brandId) {
 		return brandId == null ? null : brandService.requireActive(brandId);
 	}
 
+	/** Busca el producto o lanza 404. */
 	private ProductEntity requireProduct(Long id) {
 		return productRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException("No existe el producto " + id));
 	}
 
+	/** La variante tiene que existir y pertenecer a ese producto. */
 	private ProductVariantEntity requireVariantOfProduct(Long productId, Long variantId) {
 		requireProduct(productId);
 		ProductVariantEntity variant = productVariantRepository.findById(variantId)
@@ -203,10 +225,12 @@ public class ProductService {
 		return variant;
 	}
 
+	/** Recorta extremos y colapsa espacios internos. */
 	private static String normalize(String value) {
 		return value.trim().replaceAll("\\s+", " ");
 	}
 
+	/** Cadena vacía o solo espacios → null (campos opcionales). */
 	private static String blankToNull(String value) {
 		if (value == null) {
 			return null;

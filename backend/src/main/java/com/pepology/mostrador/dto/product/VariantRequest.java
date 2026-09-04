@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/** Body de una variante. En PUT, imageUrl null significa no tocar la foto. */
 public record VariantRequest(
 		Long brandId,
 		@NotBlank @Size(max = 100) String label,

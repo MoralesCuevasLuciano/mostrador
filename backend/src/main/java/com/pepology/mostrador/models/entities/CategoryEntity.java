@@ -16,6 +16,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * Rubro o subcategoría. parent null = rubro raíz; si hay padre, es un segundo nivel.
+ */
 @Entity
 @Table(name = "category")
 @Getter
@@ -46,6 +49,7 @@ public class CategoryEntity {
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
 
+	/** Fábrica de alta. parent null arma un rubro. */
 	public static CategoryEntity of(String name, CategoryEntity parent) {
 		CategoryEntity category = new CategoryEntity();
 		category.setName(name);

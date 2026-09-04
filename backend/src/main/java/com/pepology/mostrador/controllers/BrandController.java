@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * HTTP de marcas: /api/brands. Delega las reglas al BrandService.
+ */
 @RestController
 @RequestMapping("/api/brands")
 @RequiredArgsConstructor
@@ -25,32 +28,38 @@ public class BrandController {
 
 	private final BrandService brandService;
 
+	/** POST /api/brands — alta. */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public BrandResponse create(@Valid @RequestBody BrandRequest request) {
 		return brandService.create(request);
 	}
 
+	/** GET /api/brands — listado completo. */
 	@GetMapping
 	public List<BrandResponse> findAll() {
 		return brandService.findAll();
 	}
 
+	/** GET /api/brands/{id} — una marca. */
 	@GetMapping("/{id}")
 	public BrandResponse findById(@PathVariable Long id) {
 		return brandService.findById(id);
 	}
 
+	/** PUT /api/brands/{id} — cambia el nombre. */
 	@PutMapping("/{id}")
 	public BrandResponse update(@PathVariable Long id, @Valid @RequestBody BrandRequest request) {
 		return brandService.update(id, request);
 	}
 
+	/** DELETE /api/brands/{id} — baja lógica. */
 	@DeleteMapping("/{id}")
 	public BrandResponse deactivate(@PathVariable Long id) {
 		return brandService.deactivate(id);
 	}
 
+	/** POST /api/brands/{id}/activate — reactivar. */
 	@PostMapping("/{id}/activate")
 	public BrandResponse reactivate(@PathVariable Long id) {
 		return brandService.reactivate(id);

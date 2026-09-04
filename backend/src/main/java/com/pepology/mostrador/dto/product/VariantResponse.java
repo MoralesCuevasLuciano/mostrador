@@ -5,6 +5,7 @@ import com.pepology.mostrador.models.enums.ItemCondition;
 
 import java.math.BigDecimal;
 
+/** Variante tal como sale en la API (incluye SKU generado). */
 public record VariantResponse(
 		Long id,
 		String sku,

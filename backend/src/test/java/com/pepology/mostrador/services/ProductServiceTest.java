@@ -28,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests de ProductService: alta con variantes, SKU, baja con variantes activas, foto.
+ */
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 

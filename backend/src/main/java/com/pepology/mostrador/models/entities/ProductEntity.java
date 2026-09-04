@@ -17,6 +17,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Ficha del producto (nombre, rubro, IVA). Lo vendible es cada variante, no esta fila.
+ */
 @Entity
 @Table(name = "product")
 @Getter
@@ -56,6 +59,7 @@ public class ProductEntity {
 	@Setter(AccessLevel.NONE)
 	private LocalDateTime updatedAt;
 
+	/** Fábrica de alta. Si vatRate es null queda el 21 % de la columna. */
 	public static ProductEntity of(
 			String name,
 			String description,

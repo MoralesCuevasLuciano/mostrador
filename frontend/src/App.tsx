@@ -1,142 +1,60 @@
-import { useEffect, useState } from 'react'
-import { fetchProducts } from './api'
-import { ProductForm } from './ProductForm'
-import type { Product, Variant } from './types'
+import { useState } from 'react'
+import { Nav } from './components/Nav'
+import type { Product } from './models/product'
+import { BrandListPage } from './pages/BrandListPage'
+import { CategoryListPage } from './pages/CategoryListPage'
+import { ProductFormPage } from './pages/ProductFormPage'
+import { ProductListPage } from './pages/ProductListPage'
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-  }).format(price)
-}
+/** Pantalla actual: catálogo, formulario, o gestión de rubros/marcas. */
+type Screen = 'list' | 'form' | 'categories' | 'brands'
 
-function variantSummary(variant: Variant) {
-  const parts = [
-    variant.brand?.name,
-    variant.label === 'Única' ? null : variant.label,
-    formatPrice(variant.price),
-    variant.sku,
-    variant.barcode,
-    variant.itemCondition === 'DEFECTUOSA' ? 'Defectuosa' : null,
-  ].filter(Boolean)
-  return parts.join(' · ')
-}
-
-function ProductCard({ product }: { product: Product }) {
-  const showVariantList = product.variants.length > 1
-    || product.variants.some((variant) => variant.label !== 'Única')
-
-  return (
-    <article className={product.active ? 'card' : 'card card-inactive'}>
-      <header className="card-header">
-        <h2>{product.name}</h2>
-        {!product.active && <span className="badge">Dado de baja</span>}
-      </header>
-      <p className="meta">
-        {[
-          product.category?.name ?? 'Sin categoría',
-          `IVA ${product.vatRate}%`,
-          product.allowsEmployeeDiscount ? null : 'Sin desc. empleado',
-        ]
-          .filter(Boolean)
-          .join(' · ')}
-      </p>
-      {product.description && <p className="description">{product.description}</p>}
-      {showVariantList ? (
-        <ul className="variants">
-          {product.variants.map((variant) => (
-            <li key={variant.id} className={variant.active ? undefined : 'inactive'}>
-              {variant.imageUrl && (
-                <img src={variant.imageUrl} alt="" className="thumb" />
-              )}
-              <span>
-                {variantSummary(variant)}
-                {!variant.active && ' · Baja'}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        product.variants[0] && (
-          <p className="meta">
-            {variantSummary(product.variants[0])}
-            {!product.variants[0].active && ' · Baja'}
-          </p>
-        )
-      )}
-    </article>
-  )
-}
-
-type Screen = 'list' | 'create'
-
-function App() {
+/** Shell de la app: barra de navegación y la pantalla activa. */
+export default function App() {
   const [screen, setScreen] = useState<Screen>('list')
-  const [products, setProducts] = useState<Product[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<Product | null>(null)
 
-  function loadProducts() {
-    setError(null)
-    fetchProducts()
-      .then(setProducts)
-      .catch(() => setError('No se pudo cargar el catálogo. ¿Está el backend en el puerto 8080?'))
+  /** Abre el formulario vacío para un producto nuevo. */
+  function openCreate() {
+    setEditing(null)
+    setScreen('form')
   }
 
-  useEffect(() => {
-    if (screen === 'list') {
-      loadProducts()
-    }
-  }, [screen])
+  /** Abre el formulario precargado con el producto elegido. */
+  function openEdit(product: Product) {
+    setEditing(product)
+    setScreen('form')
+  }
 
-  function handleCreated() {
+  /** Vuelve al listado de productos. */
+  function goToList() {
+    setEditing(null)
     setScreen('list')
   }
 
   return (
     <>
-      <nav className="nav">
-        <p className="nav-brand">Mostrador</p>
-        <button
-          type="button"
-          className={screen === 'list' ? 'nav-link active' : 'nav-link'}
-          onClick={() => setScreen('list')}
-        >
-          Productos
-        </button>
-        <button
-          type="button"
-          className={screen === 'create' ? 'nav-link active' : 'nav-link'}
-          onClick={() => setScreen('create')}
-        >
-          Cargar producto
-        </button>
-      </nav>
+      <Nav
+        listActive={screen === 'list' || screen === 'categories' || screen === 'brands'}
+        createActive={screen === 'form' && !editing}
+        onList={goToList}
+        onCreate={openCreate}
+      />
       <main>
-        {screen === 'create' ? (
-          <>
-            <h1>Cargar producto</h1>
-            <ProductForm onCreated={handleCreated} />
-          </>
+        {screen === 'form' ? (
+          <ProductFormPage product={editing} onSaved={goToList} />
+        ) : screen === 'categories' ? (
+          <CategoryListPage onBack={goToList} />
+        ) : screen === 'brands' ? (
+          <BrandListPage onBack={goToList} />
         ) : (
-          <>
-            <h1>Productos</h1>
-            {error && <p className="error">{error}</p>}
-            {!error && products === null && <p>Cargando…</p>}
-            {products && products.length === 0 && (
-              <p>No hay productos cargados.</p>
-            )}
-            {products && products.length > 0 && (
-              <section className="list">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </section>
-            )}
-          </>
+          <ProductListPage
+            onEdit={openEdit}
+            onManageCategories={() => setScreen('categories')}
+            onManageBrands={() => setScreen('brands')}
+          />
         )}
       </main>
     </>
   )
 }
-
-export default App

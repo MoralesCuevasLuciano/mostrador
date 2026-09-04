@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Rubros y subcategorías (máximo dos niveles). El nombre es único dentro del mismo padre.
+ */
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
@@ -21,6 +24,7 @@ public class CategoryService {
 	private final CategoryRepository categoryRepository;
 	private final CategoryMapper categoryMapper;
 
+	/** Alta de rubro (sin padre) o subcategoría. El padre, si hay, tiene que estar activo. */
 	@Transactional
 	public CategoryResponse create(CategoryRequest request) {
 		String name = normalize(request.name());
@@ -31,6 +35,7 @@ public class CategoryService {
 		return categoryMapper.toResponse(saved);
 	}
 
+	/** Listado ordenado por nombre, incluyendo las dadas de baja. */
 	@Transactional(readOnly = true)
 	public List<CategoryResponse> findAll() {
 		return categoryRepository.findAll(Sort.by("name")).stream()
@@ -38,11 +43,13 @@ public class CategoryService {
 				.toList();
 	}
 
+	/** Una categoría por id. 404 si no existe. */
 	@Transactional(readOnly = true)
 	public CategoryResponse findById(Long id) {
 		return categoryMapper.toResponse(requireById(id));
 	}
 
+	/** Cambia nombre o padre. Un rubro con hijas no puede pasar a ser subcategoría. */
 	@Transactional
 	public CategoryResponse update(Long id, CategoryRequest request) {
 		CategoryEntity category = requireById(id);
@@ -60,6 +67,7 @@ public class CategoryService {
 		return categoryMapper.toResponse(category);
 	}
 
+	/** Baja lógica. No se puede si todavía tiene subcategorías activas. */
 	@Transactional
 	public CategoryResponse deactivate(Long id) {
 		CategoryEntity category = requireById(id);
@@ -73,6 +81,7 @@ public class CategoryService {
 		return categoryMapper.toResponse(category);
 	}
 
+	/** Reactiva. Si es subcategoría, el rubro padre también tiene que estar activo. */
 	@Transactional
 	public CategoryResponse reactivate(Long id) {
 		CategoryEntity category = requireById(id);
@@ -87,6 +96,7 @@ public class CategoryService {
 		return categoryMapper.toResponse(category);
 	}
 
+	/** Devuelve el padre activo o null. Rechaza un tercer nivel. */
 	private CategoryEntity resolveParent(Long parentId) {
 		if (parentId == null) {
 			return null;
@@ -98,6 +108,7 @@ public class CategoryService {
 		return parent;
 	}
 
+	/** El nombre no puede repetirse entre hermanos (mismo padre, o ambos rubros raíz). */
 	private void assertNameAvailable(String name, CategoryEntity parent, Long excludeId) {
 		boolean exists = parent == null
 				? existsAsRoot(name, excludeId)
@@ -108,27 +119,32 @@ public class CategoryService {
 		}
 	}
 
+	/** ¿Ya hay un rubro raíz con ese nombre? excludeId se usa al editar. */
 	private boolean existsAsRoot(String name, Long excludeId) {
 		return excludeId == null
 				? categoryRepository.existsByParentIsNullAndNameIgnoreCase(name)
 				: categoryRepository.existsByParentIsNullAndNameIgnoreCaseAndIdNot(name, excludeId);
 	}
 
+	/** ¿Ya hay una hija de ese padre con ese nombre? */
 	private boolean existsAsChild(String name, CategoryEntity parent, Long excludeId) {
 		return excludeId == null
 				? categoryRepository.existsByParentAndNameIgnoreCase(parent, name)
 				: categoryRepository.existsByParentAndNameIgnoreCaseAndIdNot(parent, name, excludeId);
 	}
 
+	/** True si tiene al menos una subcategoría (activa o no). */
 	private boolean hasChildren(CategoryEntity category) {
 		return !categoryRepository.findByParent(category).isEmpty();
 	}
 
+	/** Busca por id o lanza 404. */
 	private CategoryEntity requireById(Long id) {
 		return categoryRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException("No existe la categoría " + id));
 	}
 
+	/** Para colgar un producto: la categoría tiene que existir y estar activa. */
 	@Transactional(readOnly = true)
 	public CategoryEntity requireActive(Long id) {
 		CategoryEntity category = requireById(id);
@@ -138,6 +154,7 @@ public class CategoryService {
 		return category;
 	}
 
+	/** Recorta extremos y colapsa espacios internos. */
 	private static String normalize(String name) {
 		return name.trim().replaceAll("\\s+", " ");
 	}

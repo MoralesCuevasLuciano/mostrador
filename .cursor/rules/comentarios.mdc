@@ -1,0 +1,12 @@
+---
+description: Comentar cada archivo y función que se cree o se agregue
+alwaysApply: true
+---
+
+# Comentarios en código nuevo
+
+Todo archivo, tipo, función o componente que se cree o se agregue tiene que llevar un comentario breve en español que diga para qué sirve.
+
+- Un comentario de propósito por unidad (archivo, función, componente). No narrar línea a línea.
+- No comentar getters, setters ni código obvio.
+- Java: Javadoc. TypeScript: `/** … */`.

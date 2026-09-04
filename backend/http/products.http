@@ -1,3 +1,4 @@
+# Llamadas de prueba a /api/products (alta, edición, variantes, baja).
 ### Alta producto simple (variante Única)
 POST http://localhost:8080/api/products
 Content-Type: application/json

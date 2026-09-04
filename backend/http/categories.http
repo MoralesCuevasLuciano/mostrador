@@ -1,3 +1,4 @@
+# Llamadas de prueba a /api/categories.
 ### Alta rubro
 POST http://localhost:8080/api/categories
 Content-Type: application/json

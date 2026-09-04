@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Reglas de negocio de marcas: unicidad del nombre, baja lógica y reactivar.
+ */
 @Service
 @RequiredArgsConstructor
 public class BrandService {
@@ -21,6 +24,7 @@ public class BrandService {
 	private final BrandRepository brandRepository;
 	private final BrandMapper brandMapper;
 
+	/** Alta. Normaliza espacios y rechaza si el nombre ya existe (sin importar mayúsculas). */
 	@Transactional
 	public BrandResponse create(BrandRequest request) {
 		String name = normalize(request.name());
@@ -31,6 +35,7 @@ public class BrandService {
 		return brandMapper.toResponse(saved);
 	}
 
+	/** Listado ordenado por nombre, incluyendo las dadas de baja. */
 	@Transactional(readOnly = true)
 	public List<BrandResponse> findAll() {
 		return brandRepository.findAll(Sort.by("name")).stream()
@@ -38,11 +43,13 @@ public class BrandService {
 				.toList();
 	}
 
+	/** Una marca por id. 404 si no existe. */
 	@Transactional(readOnly = true)
 	public BrandResponse findById(Long id) {
 		return brandMapper.toResponse(requireById(id));
 	}
 
+	/** Cambia el nombre. No puede pisar el de otra marca. */
 	@Transactional
 	public BrandResponse update(Long id, BrandRequest request) {
 		BrandEntity brand = requireById(id);
@@ -54,6 +61,7 @@ public class BrandService {
 		return brandMapper.toResponse(brand);
 	}
 
+	/** Baja lógica (is_active = false). No borra la fila. */
 	@Transactional
 	public BrandResponse deactivate(Long id) {
 		BrandEntity brand = requireById(id);
@@ -64,6 +72,7 @@ public class BrandService {
 		return brandMapper.toResponse(brand);
 	}
 
+	/** Vuelve a activar una marca dada de baja. */
 	@Transactional
 	public BrandResponse reactivate(Long id) {
 		BrandEntity brand = requireById(id);
@@ -74,11 +83,13 @@ public class BrandService {
 		return brandMapper.toResponse(brand);
 	}
 
+	/** Busca por id o lanza 404. */
 	private BrandEntity requireById(Long id) {
 		return brandRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException("No existe la marca " + id));
 	}
 
+	/** Para colgar una variante: la marca tiene que existir y estar activa. */
 	@Transactional(readOnly = true)
 	public BrandEntity requireActive(Long id) {
 		BrandEntity brand = requireById(id);
@@ -88,6 +99,7 @@ public class BrandService {
 		return brand;
 	}
 
+	/** Recorta extremos y colapsa espacios internos. No cambia mayúsculas. */
 	private static String normalize(String name) {
 		return name.trim().replaceAll("\\s+", " ");
 	}

@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * HTTP de rubros y subcategorías: /api/categories.
+ */
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -25,32 +28,38 @@ public class CategoryController {
 
 	private final CategoryService categoryService;
 
+	/** POST /api/categories — alta de rubro o subcategoría. */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public CategoryResponse create(@Valid @RequestBody CategoryRequest request) {
 		return categoryService.create(request);
 	}
 
+	/** GET /api/categories — listado completo. */
 	@GetMapping
 	public List<CategoryResponse> findAll() {
 		return categoryService.findAll();
 	}
 
+	/** GET /api/categories/{id} — una categoría. */
 	@GetMapping("/{id}")
 	public CategoryResponse findById(@PathVariable Long id) {
 		return categoryService.findById(id);
 	}
 
+	/** PUT /api/categories/{id} — cambia nombre o padre. */
 	@PutMapping("/{id}")
 	public CategoryResponse update(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
 		return categoryService.update(id, request);
 	}
 
+	/** DELETE /api/categories/{id} — baja lógica. */
 	@DeleteMapping("/{id}")
 	public CategoryResponse deactivate(@PathVariable Long id) {
 		return categoryService.deactivate(id);
 	}
 
+	/** POST /api/categories/{id}/activate — reactivar. */
 	@PostMapping("/{id}/activate")
 	public CategoryResponse reactivate(@PathVariable Long id) {
 		return categoryService.reactivate(id);

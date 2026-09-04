@@ -21,6 +21,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests de BrandService con Mockito (sin base).
+ * Los nombres de método dicen el escenario: create, update, baja, 404.
+ */
 @ExtendWith(MockitoExtension.class)
 class BrandServiceTest {
 
