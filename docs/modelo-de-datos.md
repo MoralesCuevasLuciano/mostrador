@@ -68,11 +68,13 @@ La ficha comercial del artículo. No tiene precio, stock, marca ni código de ba
 | category_id | FK → category | no |
 | vat_rate | decimal(5,2) | sí |
 | allows_employee_discount | boolean | sí |
+| tracks_stock | boolean | sí |
 | is_active | boolean | sí |
 
 - `name` — el criterio de agrupación es el **tipo de artículo, no la marca**: "Cuaderno A4 rayado" es un producto aunque incluya dos marcas distintas con códigos de barras distintos.
 - `vat_rate` — alícuota de IVA. Por defecto 21,00 y oculta en el alta; se edita solo en los casos excepcionales.
 - `allows_employee_discount` — si admite el descuento de empleado. Se apaga en artículos de margen mínimo como cigarrillos.
+- `tracks_stock` — si el producto lleva inventario. En falso para los caramelos sueltos, que se venden surtidos sin distinguir sabor, y para servicios como las fotocopias. Cuando está en falso, la venta no genera movimientos de stock y el producto no aparece en ninguna pantalla de inventario.
 
 ### product_variant
 

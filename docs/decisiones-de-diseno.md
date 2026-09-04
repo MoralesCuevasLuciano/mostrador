@@ -84,6 +84,26 @@ Cada decisión incluye el problema real que la originó, la alternativa que se d
 
 ---
 
+## 4 bis. Hay productos que no llevan inventario
+
+**Problema.** Los caramelos se venden surtidos: nadie anota cinco de un sabor y seis de otro, se anotan diecisiete caramelos y se repone a ojo. Y las fotocopias directamente no existen hasta que alguien las pide, aunque sí exista stock de resmas.
+
+**Decisión.** Un campo `tracks_stock` en `product`. Cuando está en falso, vender no genera movimientos de stock y el producto queda fuera de las pantallas de inventario.
+
+**Por qué no alcanzaba con no cargarles stock.** Sin el campo, "no tiene fila en `stock`" pasaría a significar dos cosas opuestas: que todavía no se inventarió —donde la venta debe descontar y dejar el saldo negativo como señal de recuento— o que no se lleva inventario a propósito, donde no hay que generar nada. El sistema no puede adivinar cuál es.
+
+Es la misma clase de ambigüedad que se resolvió distinguiendo la ausencia de fila de la fila en cero.
+
+**Qué pasaría sin él.** Los caramelos acumularían saldo negativo indefinidamente —miles de unidades en rojo al cabo de un año— y aparecerían para siempre en la lista de productos pendientes de contar.
+
+**Va en `product` y no en la variante**, porque es una política del artículo entero, igual que la alícuota de IVA.
+
+**Sobre las resmas y las fotocopias.** Se dejan desacopladas a propósito: la fotocopia no descuenta una fracción de resma. Las resmas se descuentan cuando se abre una, con un movimiento de consumo interno, que es el mismo mecanismo del papel higiénico y la lavandina. Hacer que cada fotocopia consuma 1/500 de resma sería una precisión que nadie va a sostener.
+
+**Lo que se gana igual.** Aunque no haya stock, sí hay historial de ventas. Eso da la rotación real de los caramelos, que hoy no existe: la reposición deja de ser a ojo y pasa a tener un número atrás.
+
+---
+
 ## 5. El stock puede quedar negativo
 
 **Problema.** El inventario va a estar mal durante mucho tiempo. Si el sistema bloquea la venta por falta de stock, le va a decir "no hay" al cajero con el producto en la mano.
