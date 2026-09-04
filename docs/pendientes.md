@@ -6,13 +6,11 @@ Cuatro categorías: lo que falta implementar del esqueleto, lo que falta modelar
 
 ## Implementación en curso
 
-El backend Spring Boot ya arranca y conecta a MySQL. El frontend está vacío (`mostrador/frontend`).
+El catálogo ya está en producción local: Flyway `V1__catalogo.sql`, entidades JPA, API REST (`/api/brands`, `/api/categories`, `/api/products`) y frontend React (listado y alta de productos, alta inline de marca y categoría).
 
-**Migración Flyway V1 — catálogo.** Todavía no hay scripts en `db/migration`. El primer bloque a crear en SQL es `branch`, `category`, `brand`, `product` y `product_variant`. Después las entidades JPA que las mapean.
+**V2 — inventario.** Siguiente bloque: `stock` y `stock_movement`, más API y pantallas. `branch` ya está en V1 pero sin endpoints.
 
-**V2 — inventario.** `stock` y `stock_movement`, cuando el catálogo ya exista.
-
-**Frontend.** Sin stack definido. Se elige cuando el catálogo tenga API usable.
+**Frontend.** React 19 + Vite 8. Falta UI de edición, baja y reactivación (la API de catálogo ya las expone).
 
 ---
 
