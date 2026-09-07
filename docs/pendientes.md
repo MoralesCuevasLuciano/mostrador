@@ -14,6 +14,18 @@ Cuatro categorías: lo que falta implementar del esqueleto, lo que falta modelar
 
 ---
 
+## Mejoras no urgentes del código
+
+Ninguna rompe lo que ya funciona. Se cierran cuando duelan o cuando haya una tarde suelta.
+
+**La lista de “sin contar” se arma en el navegador.** La pantalla de inventario pide todos los productos y todos los saldos, y resta. Con decenas de artículos alcanza; con miles se va a sentir. Cuando duela, el backend tiene que devolver esa lista ya filtrada.
+
+**Falta el handler de validación de campos.** El manejador global cubre 404 y reglas de negocio, pero no `MethodArgumentNotValidException`. Si un formulario manda un precio inválido, el front se come un 500 en vez de marcar el campo. Es una tarde.
+
+**`EXTRAVÍO` con tilde en el enum.** Funciona, pero los enums guardados como texto con acento son un clásico de problemas al cambiar de entorno o de cliente HTTP. `EXTRAVIO` o `PERDIDA` evitan ese roce. Cosmético, y hay que migrar las filas que ya existan.
+
+---
+
 ## Bloques del modelo sin diseñar
 
 ### Usuarios y permisos
