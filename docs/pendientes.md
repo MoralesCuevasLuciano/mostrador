@@ -1,6 +1,6 @@
 # Pendientes
 
-Cuatro categorías: lo que falta implementar del esqueleto, lo que falta modelar, lo que espera una definición del negocio, y lo que se dejó afuera a propósito.
+Cinco categorías: lo que falta implementar del esqueleto, mejoras del código que no bloquean, lo que falta modelar, lo que espera una definición del negocio, y lo que se dejó afuera a propósito.
 
 ---
 
@@ -8,7 +8,7 @@ Cuatro categorías: lo que falta implementar del esqueleto, lo que falta modelar
 
 **Hecho (catálogo + sucursales + inventario).** Flyway V1–V4. API de marcas, categorías, productos, sucursales y stock. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario (sin contar / ya contado, recuento, entrada, consumo, extravío, traslado, historial).
 
-**Siguiente bloque: ventas y caja.** Todavía no hay tablas ni API. Cuando existan, la venta va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`.
+**Siguiente bloque: caja y después ventas.** Todavía no hay tablas ni API. La venta necesita sesión de caja abierta, por eso va segunda. Cuando exista, va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`.
 
 **Inventario que queda para más adelante.** `min_quantity` está en la tabla y no se edita en la UI. Ventas que dejen saldo negativo (la regla ya está: no se bloquea).
 
@@ -23,6 +23,20 @@ Ninguna rompe lo que ya funciona. Se cierran cuando duelan o cuando haya una tar
 **Falta el handler de validación de campos.** El manejador global cubre 404 y reglas de negocio, pero no `MethodArgumentNotValidException`. Si un formulario manda un precio inválido, el front se come un 500 en vez de marcar el campo. Es una tarde.
 
 **`EXTRAVÍO` con tilde en el enum.** Funciona, pero los enums guardados como texto con acento son un clásico de problemas al cambiar de entorno o de cliente HTTP. `EXTRAVIO` o `PERDIDA` evitan ese roce. Cosmético, y hay que migrar las filas que ya existan.
+
+---
+
+## Cosas con fecha implícita
+
+No bloquean caja ni venta, pero cada una tiene un “cuándo” y no conviene olvidarlas.
+
+**Paginación del listado de productos.** El endpoint de catálogo hoy devuelve todo con sus variantes. Con miles de artículos se va a sentir, y cambiarlo después toca API, DTO y pantalla. Conviene hacerla antes de que el catálogo crezca de verdad.
+
+**Etiquetas con el SKU.** El SKU existe para la mercadería sin código de fábrica. Sin un botón que imprima el código, cuando llegue la venta un porcentaje grande no se va a poder escanear. **Antes del módulo de ventas.**
+
+**Actualización masiva de precios.** Con la inflación es una tarea semanal. Hoy cambiar el precio de una góndola es entrar producto por producto. No bloquea el siguiente módulo, pero es de las primeras cosas que van a pedir cuando usen el catálogo en serio.
+
+**Buscador del listado que acepte código de barras.** El mismo campo: si parece un código, busca por código; si no, por nombre. Barato, y cambia el uso: tenés el producto en la mano, escaneás y aparece la ficha.
 
 ---
 
