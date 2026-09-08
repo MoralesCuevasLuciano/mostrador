@@ -6,9 +6,9 @@ Cinco categorías: lo que falta implementar del esqueleto, mejoras del código q
 
 ## Implementación en curso
 
-**Hecho (catálogo + sucursales + inventario).** Flyway V1–V4. API de marcas, categorías, productos, sucursales y stock. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario (sin contar / ya contado, recuento, entrada, consumo, extravío, traslado, historial).
+**Hecho (catálogo + sucursales + inventario + API de caja).** Flyway V1–V6. API de marcas, categorías, productos, sucursales, stock y caja. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario (sin contar / ya contado, recuento, entrada, consumo, extravío, traslado, historial). Caja todavía no tiene pantalla.
 
-**Siguiente bloque: caja y después ventas.** Flyway V5 ya crea `cash_session` y `cash_movement`; todavía no hay API ni pantalla. La venta necesita sesión abierta, por eso va segunda. Cuando exista, va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`. `opened_by`, `closed_by`, `employee_id` y `registered_by` de caja se agregan cuando exista `employee`.
+**Siguiente bloque: pantalla de caja y después ventas.** La venta necesita sesión abierta, por eso va segunda. Cuando exista, va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint) y a congelar `total_cash_sales` de verdad (hoy queda 0 al cerrar). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`. `opened_by`, `closed_by`, `employee_id` y `registered_by` de caja se agregan cuando exista `employee`. El vale todavía no genera la fila en la cuenta del empleado.
 
 **Inventario que queda para más adelante.** `min_quantity` está en la tabla y no se edita en la UI. Ventas que dejen saldo negativo (la regla ya está: no se bloquea).
 
@@ -19,8 +19,6 @@ Cinco categorías: lo que falta implementar del esqueleto, mejoras del código q
 Ninguna rompe lo que ya funciona. Se cierran cuando duelan o cuando haya una tarde suelta.
 
 **La lista de “sin contar” se arma en el navegador.** La pantalla de inventario pide todos los productos y todos los saldos, y resta. Con decenas de artículos alcanza; con miles se va a sentir. Cuando duela, el backend tiene que devolver esa lista ya filtrada.
-
-**Falta el handler de validación de campos.** El manejador global cubre 404 y reglas de negocio, pero no `MethodArgumentNotValidException`. Si un formulario manda un precio inválido, el front se come un 500 en vez de marcar el campo. Es una tarde.
 
 **`EXTRAVÍO` con tilde en el enum.** Funciona, pero los enums guardados como texto con acento son un clásico de problemas al cambiar de entorno o de cliente HTTP. `EXTRAVIO` o `PERDIDA` evitan ese roce. Cosmético, y hay que migrar las filas que ya existan.
 

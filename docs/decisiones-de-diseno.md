@@ -136,9 +136,11 @@ El caché se justifica por volumen, no por simetría.
 
 - La línea de venta guarda el precio de lista y la alícuota de IVA vigentes al vender.
 - La liquidación guarda las horas, la tarifa y todos los importes.
-- El arqueo guarda el total de ventas en efectivo y el total de salidas del día.
+- El arqueo guarda el total de ventas en efectivo, el total de salidas y el total de ingresos de efectivo del día.
 
-**El límite.** Solo se congela **lo que viene de otras tablas**. Lo que se deriva de campos ya congelados de la misma fila no se guarda: el monto esperado de un arqueo y su diferencia se calculan de la apertura, las ventas, las salidas y el conteo, que ya están fijos. Guardarlos además sería redundancia con riesgo de inconsistencia.
+**El límite.** Solo se congela **lo que viene de otras tablas**. Lo que se deriva de campos ya congelados de la misma fila no se guarda: el monto esperado de un arqueo y su diferencia se calculan de la apertura, las ventas, las salidas, los ingresos y el conteo, que ya están fijos. Guardarlos además sería redundancia con riesgo de inconsistencia.
+
+Mientras la planilla está **abierta**, los movimientos se pueden corregir o borrar y los totales de salidas e ingresos se muestran en vivo. El congelado aplica al cerrar.
 
 **Caso ilustrativo.** Si una venta mal cargada se corrige días después, el arqueo de aquel día sigue mostrando el descuadre que hubo. Eso es correcto: el arqueo detectó un problema real y esa evidencia no debe desaparecer. El total de ventas del mes, en cambio, sí refleja la corrección, porque se calcula desde `sale`. Son dos preguntas distintas con dos respuestas correctas.
 

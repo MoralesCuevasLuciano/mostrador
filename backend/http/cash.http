@@ -1,0 +1,79 @@
+# Cada bloque ### es un request distinto. Clic en Send Request en ESE bloque.
+
+### Planilla de hoy
+GET http://localhost:8080/api/cash/1/today
+
+### Historial de planillas
+GET http://localhost:8080/api/cash/1/sessions
+
+### Planilla de un día
+GET http://localhost:8080/api/cash/1/sessions/2026-09-08
+
+### Historial de movimientos
+GET http://localhost:8080/api/cash/1/sessions/2026-09-08/movements
+
+### Corregir movimiento
+PUT http://localhost:8080/api/cash/1/movements/2
+Content-Type: application/json
+
+{
+  "movementType": "GASTO",
+  "amount": 3500.00,
+  "description": "era gasto, no vale"
+}
+
+### Borrar movimiento
+DELETE http://localhost:8080/api/cash/1/movements/2
+
+### Recuento de apertura
+POST http://localhost:8080/api/cash/1/sessions/2026-09-08/opening-count
+Content-Type: application/json
+
+{
+  "openingAmount": 45000.00
+}
+
+### Retiro por resguardo
+POST http://localhost:8080/api/cash/1/sessions/2026-09-08/withdrawals
+Content-Type: application/json
+
+{
+  "amount": 120000.00,
+  "description": "A la caja"
+}
+
+### Vale
+POST http://localhost:8080/api/cash/1/sessions/2026-09-08/vales
+Content-Type: application/json
+
+{
+  "amount": 5000.00,
+  "description": "vale Juan"
+}
+
+### Gasto
+POST http://localhost:8080/api/cash/1/sessions/2026-09-08/expenses
+Content-Type: application/json
+
+{
+  "amount": 120000.00,
+  "description": "Proveedor de figus"
+}
+
+### Ingreso de efectivo
+POST http://localhost:8080/api/cash/1/sessions/2026-09-08/cash-ins
+Content-Type: application/json
+
+{
+  "amount": 200000.00,
+  "description": "Ingresa el dueño"
+}
+
+### Cierre
+POST http://localhost:8080/api/cash/1/sessions/2026-09-08/close
+Content-Type: application/json
+
+{
+  "closingAmount": 15500.00,
+  "note": "faltó un poco"
+}

@@ -440,6 +440,7 @@ La planilla del día. Una por sucursal y fecha, con único sobre esa combinació
 | opened_by | FK → employee | no |
 | total_cash_sales | decimal(12,2) | no |
 | total_cash_out | decimal(12,2) | no |
+| total_cash_in | decimal(12,2) | no |
 | closing_amount | decimal(12,2) | no |
 | closed_at | timestamp | no |
 | closed_by | FK → employee | no |
@@ -447,10 +448,12 @@ La planilla del día. Una por sucursal y fecha, con único sobre esa combinació
 
 - `opening_amount` — se completa solo con lo que arrastra del día anterior cuando la sesión se abre automáticamente. El cajón no se vacía nunca, así que el saldo de apertura es el de cierre del día previo.
 - `opening_counted_at` — vacío significa que ese monto es heredado y nadie lo verificó contando. Permite vender antes de contar sin que el sistema mienta.
-- `total_cash_sales` y `total_cash_out` — congelados al cerrar. Son los únicos que vienen de otras tablas y por eso podrían mutar.
+- `total_cash_sales`, `total_cash_out` y `total_cash_in` — congelados al cerrar. Vienen de otras tablas y por eso podrían mutar. `total_cash_out` es solo salidas (montos negativos); `total_cash_in` es solo ingresos de efectivo.
 - `closing_amount` — vacío mientras la caja está abierta. Reemplaza a un campo de estado.
 
-El **monto esperado** y la **diferencia** no se guardan: se derivan de cuatro campos congelados de la misma fila, así que su resultado es inmutable.
+En V5–V6 todavía no están `opened_by`, `closed_by`, `employee_id` ni `registered_by`: esperan a `employee`.
+
+El **monto esperado** y la **diferencia** no se guardan: se derivan de la apertura, las ventas, las salidas, los ingresos y el conteo. Mientras la caja está abierta, la API muestra salidas e ingresos en vivo; al cerrar se persisten.
 
 El "total tarjetas" y la facturación del día tampoco se guardan: son reportes que se calculan sumando las ventas.
 
@@ -462,14 +465,14 @@ Entradas y salidas que no son ventas.
 |---|---|---|
 | id | PK | sí |
 | cash_session_id | FK → cash_session | sí |
-| type | varchar | sí |
+| movement_type | varchar | sí |
 | amount | decimal(12,2) | sí |
 | employee_id | FK → employee | no |
 | description | varchar | no |
 | registered_by | FK → employee | no |
 | movement_at | timestamp | sí |
 
-`type` distingue cuatro casos: **retiro por resguardo** (plata que sale del cajón por seguridad y sigue siendo del negocio), **vale** (genera deuda del empleado), **gasto o pago a proveedor**, e **ingreso de efectivo** (cuando se repone cambio).
+`movement_type` distingue cuatro casos: **retiro por resguardo** (plata que sale del cajón por seguridad y sigue siendo del negocio), **vale** (genera deuda del empleado), **gasto o pago a proveedor**, e **ingreso de efectivo** (cuando se repone cambio).
 
 Los dos primeros se ven igual desde el cajón pero significan cosas opuestas, y por eso se distinguen desde el modelo.
 
@@ -490,3 +493,5 @@ Estas viven en la capa de aplicación porque implican comparar o sumar varias fi
 - Un vale genera dos filas —una en caja y otra en la cuenta del empleado— creadas juntas.
 - El recargo por financiación se calcula sobre el monto pagado con crédito en 2 o 3 cuotas, no sobre el total de la venta.
 - Una venta de un día ya cerrado se anula y se rehace; la corrección no toca la caja de aquel día, que ya registró el descuadre.
+- No se abre un día nuevo si hay una caja anterior de esa sucursal sin cerrar.
+- Con la caja abierta se puede corregir o borrar un movimiento; con la caja cerrada, no.
