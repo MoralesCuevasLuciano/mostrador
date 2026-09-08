@@ -8,7 +8,7 @@ Cinco categorías: lo que falta implementar del esqueleto, mejoras del código q
 
 **Hecho (catálogo + sucursales + inventario).** Flyway V1–V4. API de marcas, categorías, productos, sucursales y stock. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario (sin contar / ya contado, recuento, entrada, consumo, extravío, traslado, historial).
 
-**Siguiente bloque: caja y después ventas.** Todavía no hay tablas ni API. La venta necesita sesión de caja abierta, por eso va segunda. Cuando exista, va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`.
+**Siguiente bloque: caja y después ventas.** Flyway V5 ya crea `cash_session` y `cash_movement`; todavía no hay API ni pantalla. La venta necesita sesión abierta, por eso va segunda. Cuando exista, va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`. `opened_by`, `closed_by`, `employee_id` y `registered_by` de caja se agregan cuando exista `employee`.
 
 **Inventario que queda para más adelante.** `min_quantity` está en la tabla y no se edita en la UI. Ventas que dejen saldo negativo (la regla ya está: no se bloquea).
 
