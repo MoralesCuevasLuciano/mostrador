@@ -477,3 +477,82 @@ button.link-add {
   font-size: 0.9rem;
   color: #5c574e;
 }
+
+.cash-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cash-expected {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.cash-figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin: 0.85rem 0 0;
+}
+
+.cash-figures dt {
+  font-size: 0.75rem;
+  color: #8a8478;
+}
+
+.cash-figures dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.cash-movements {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.cash-movements li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+  padding: 0.55rem 0;
+  border-top: 1px solid #efeae1;
+}
+
+.cash-row-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.cash-edit {
+  grid-column: 1 / -1;
+}
+
+.cash-history {
+  margin-top: 2rem;
+}
+
+.cash-history-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.pos-flash {
+  color: #3d5a3d;
+  font-weight: 600;
+}

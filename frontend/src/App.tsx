@@ -3,17 +3,18 @@ import { Nav } from './components/Nav'
 import { useBranch } from './hooks/useBranch'
 import type { Product } from './models/product'
 import { BrandListPage } from './pages/BrandListPage'
+import { CashPage } from './pages/CashPage'
 import { CategoryListPage } from './pages/CategoryListPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductListPage } from './pages/ProductListPage'
 import { StockListPage } from './pages/StockListPage'
 
-/** Pantalla actual: catálogo, formulario, rubros/marcas o inventario. */
-type Screen = 'list' | 'form' | 'categories' | 'brands' | 'stock'
+/** Pantalla actual: caja, catálogo, formulario, rubros/marcas o inventario. */
+type Screen = 'cash' | 'list' | 'form' | 'categories' | 'brands' | 'stock'
 
 /** Shell de la app: barra de navegación, sucursal activa y la pantalla. */
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('list')
+  const [screen, setScreen] = useState<Screen>('cash')
   const [editing, setEditing] = useState<Product | null>(null)
   const { activeBranches, selected, selectBranch, error, loading } = useBranch()
 
@@ -43,11 +44,16 @@ export default function App() {
         listActive={screen === 'list' || screen === 'categories' || screen === 'brands'}
         createActive={screen === 'form' && !editing}
         inventoryActive={screen === 'stock'}
+        cashActive={screen === 'cash'}
         onList={goToList}
         onCreate={openCreate}
         onInventory={() => {
           setEditing(null)
           setScreen('stock')
+        }}
+        onCash={() => {
+          setEditing(null)
+          setScreen('cash')
         }}
         branches={activeBranches}
         selectedBranchId={selected?.id ?? null}
@@ -56,7 +62,9 @@ export default function App() {
       />
       <main>
         {error && <p className="error">{error}</p>}
-        {screen === 'form' ? (
+        {screen === 'cash' ? (
+          <CashPage branch={selected} />
+        ) : screen === 'form' ? (
           <ProductFormPage product={editing} onSaved={goToList} />
         ) : screen === 'categories' ? (
           <CategoryListPage onBack={goToList} />

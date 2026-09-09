@@ -100,6 +100,19 @@ public class StockService {
 		return applySignedUnits(variantId, branchId, quantity, StockMovementType.EXTRAVÍO, -1, description);
 	}
 
+	/**
+	 * Descuenta por una venta. Si el producto no lleva inventario, no hace nada.
+	 * No bloquea si el saldo queda negativo.
+	 */
+	@Transactional
+	public void registerSale(Long variantId, Long branchId, int quantity, String description) {
+		ProductVariantEntity variant = productService.requireActiveVariant(variantId);
+		if (!variant.getProduct().isTracksStock()) {
+			return;
+		}
+		applySignedUnits(variantId, branchId, quantity, StockMovementType.VENTA, -1, description);
+	}
+
 	/** Mueve unidades de un local a otro. Origina dos movimientos TRASLADO vinculados. */
 	@Transactional
 	public StockTransferResponse transfer(

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * Planilla de caja. expectedAmount y difference no se guardan: se derivan.
  * open=true si closingAmount está vacío. difference es null mientras está abierta.
  * totalCashOut son solo salidas; totalCashIn, solo ingresos.
- * Con la caja abierta esos dos (y totalCashSales=0) van en vivo, sin persistir.
+ * Con la caja abierta, ventas en efectivo, salidas e ingresos van en vivo, sin persistir.
  */
 public record CashSessionResponse(
 		Long id,

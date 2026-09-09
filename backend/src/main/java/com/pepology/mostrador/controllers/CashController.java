@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,10 +41,27 @@ public class CashController {
 		return cashService.current(branchId);
 	}
 
-	/** GET /api/cash/{branchId}/sessions — historial de planillas de ese local. */
+	/** GET /api/cash/{branchId}/sessions?from=&to= — planillas de ese rango (máx. 62 días). */
 	@GetMapping("/{branchId}/sessions")
-	public List<CashSessionResponse> listByBranch(@PathVariable Long branchId) {
-		return cashService.listByBranch(branchId);
+	public List<CashSessionResponse> listByBranch(
+			@PathVariable Long branchId,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		return cashService.listByBranch(branchId, from, to);
+	}
+
+	/** GET /api/cash/{branchId}/open-sessions — cajas sin cerrar de ese local. */
+	@GetMapping("/{branchId}/open-sessions")
+	public List<CashSessionResponse> listOpen(@PathVariable Long branchId) {
+		return cashService.listOpen(branchId);
+	}
+
+	/** GET /api/cash/{branchId}/previous-session?before= — la planilla anterior a esa fecha. */
+	@GetMapping("/{branchId}/previous-session")
+	public CashSessionResponse previous(
+			@PathVariable Long branchId,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate before) {
+		return cashService.previous(branchId, before);
 	}
 
 	/** GET /api/cash/{branchId}/sessions/{date} — planilla de ese día. 404 si no se abrió. */

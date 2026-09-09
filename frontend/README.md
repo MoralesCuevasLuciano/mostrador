@@ -4,6 +4,7 @@ React 19 + TypeScript + Vite 8. CSS propio, sin router ni librería de UI.
 
 ## Pantallas
 
+- **Caja** — planilla del día: abrir, monto esperado, recuento de apertura, retiros / vales / gastos / ingresos y cierre. Historial por semana.
 - **Productos** — listado activo o dados de baja; desde acá se gestionan marcas y categorías. Las variantes dadas de baja no se muestran en la tarjeta.
 - **Cargar / editar producto** — ficha + variantes, foto, “Lleva inventario”. En edición, un botón arriba a la derecha abre un popup para reactivar variantes dadas de baja.
 - **Inventario** — según la sucursal de la barra: pendientes de contar y ya contados. Recuento, entrada, consumo interno, extravío, traslado e historial.
@@ -35,7 +36,7 @@ src/
 ├── hooks/        sucursal de trabajo, escáner de barras
 ├── mappers/      API ↔ draft del formulario
 ├── models/       tipos TypeScript
-├── pages/        listados y formulario
+├── pages/        listados, formulario, inventario y caja
 ├── services/     llamadas a /api
 └── utils/        plata, texto, etiquetas de stock
 ```

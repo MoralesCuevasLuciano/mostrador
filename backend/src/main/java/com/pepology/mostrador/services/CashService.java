@@ -11,6 +11,7 @@ import com.pepology.mostrador.models.entities.CashSessionEntity;
 import com.pepology.mostrador.models.enums.CashMovementType;
 import com.pepology.mostrador.repositories.CashMovementRepository;
 import com.pepology.mostrador.repositories.CashSessionRepository;
+import com.pepology.mostrador.repositories.SalePaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -35,6 +37,7 @@ public class CashService {
 
 	private final CashSessionRepository cashSessionRepository;
 	private final CashMovementRepository cashMovementRepository;
+	private final SalePaymentRepository salePaymentRepository;
 	private final BranchService branchService;
 	private final CashMapper cashMapper;
 
@@ -50,13 +53,44 @@ public class CashService {
 		return toResponse(requireSession(branchId, businessDate));
 	}
 
-	/** Planillas de un local, de la más reciente a la más vieja. */
+	/**
+	 * Planillas de un local entre from y to (inclusive), de la más reciente a la más vieja.
+	 * El rango no puede superar 62 días para no devolver el historial entero.
+	 */
 	@Transactional(readOnly = true)
-	public List<CashSessionResponse> listByBranch(Long branchId) {
+	public List<CashSessionResponse> listByBranch(Long branchId, LocalDate from, LocalDate to) {
+		if (from.isAfter(to)) {
+			throw new BusinessRuleException("La fecha desde no puede ser posterior a hasta");
+		}
+		long days = ChronoUnit.DAYS.between(from, to) + 1;
+		if (days > 62) {
+			throw new BusinessRuleException("El rango no puede superar los 62 días");
+		}
 		BranchEntity branch = branchService.requireActive(branchId);
-		return cashSessionRepository.findByBranchOrderByBusinessDateDesc(branch).stream()
+		return cashSessionRepository
+				.findByBranchAndBusinessDateBetweenOrderByBusinessDateDesc(branch, from, to)
+				.stream()
 				.map(this::toResponse)
 				.toList();
+	}
+
+	/** Planillas abiertas de un local, para detectar una caja anterior sin cerrar. */
+	@Transactional(readOnly = true)
+	public List<CashSessionResponse> listOpen(Long branchId) {
+		BranchEntity branch = branchService.requireActive(branchId);
+		return cashSessionRepository.findByBranchAndClosingAmountIsNullOrderByBusinessDateDesc(branch).stream()
+				.map(this::toResponse)
+				.toList();
+	}
+
+	/** La última planilla anterior a esa fecha. 404 si el local nunca abrió caja. */
+	@Transactional(readOnly = true)
+	public CashSessionResponse previous(Long branchId, LocalDate before) {
+		BranchEntity branch = branchService.requireActive(branchId);
+		CashSessionEntity session = cashSessionRepository
+				.findFirstByBranchAndBusinessDateLessThanOrderByBusinessDateDesc(branch, before)
+				.orElseThrow(() -> new NotFoundException("No hay una caja anterior al " + before));
+		return toResponse(session);
 	}
 
 	/**
@@ -151,7 +185,7 @@ public class CashService {
 	}
 
 	/**
-	 * Cierra la caja: congela ventas (0 hasta que exista ese módulo), salidas e ingresos.
+	 * Cierra la caja: congela ventas en efectivo, salidas e ingresos.
 	 * El monto esperado y la diferencia se calculan en la respuesta, no se persisten.
 	 */
 	@Transactional
@@ -163,13 +197,25 @@ public class CashService {
 		BigDecimal counted = requireNonNegative(closingAmount, "El cierre no puede ser negativo");
 		CashSessionEntity session = requireOpen(getOrOpenSession(branchId, businessDate));
 		List<CashMovementEntity> movements = cashMovementRepository.findBySessionOrderByMovementAtDesc(session);
-		session.setTotalCashSales(BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY));
+		session.setTotalCashSales(cashSales(session));
 		session.setTotalCashOut(sumBySign(movements, -1));
 		session.setTotalCashIn(sumBySign(movements, 1));
 		session.setClosingAmount(counted);
 		session.setClosedAt(LocalDateTime.now());
 		session.setNote(blankToNull(note));
 		return toResponse(session);
+	}
+
+	/** Caja de hoy, abierta. Para cobrar una venta. */
+	@Transactional
+	public CashSessionEntity requireOpenToday(Long branchId) {
+		return requireOpen(getOrOpenSession(branchId, today()));
+	}
+
+	/** Planilla de hoy: la abre si no existe, aunque ya esté cerrada. */
+	@Transactional
+	public CashSessionEntity todaySession(Long branchId) {
+		return getOrOpenSession(branchId, today());
 	}
 
 	/** Busca la planilla o la crea heredando el último cierre. */
@@ -240,12 +286,20 @@ public class CashService {
 	private CashSessionResponse toResponse(CashSessionEntity session) {
 		BigDecimal liveOut = BigDecimal.ZERO;
 		BigDecimal liveIn = BigDecimal.ZERO;
+		BigDecimal liveSales = BigDecimal.ZERO;
 		if (session.getClosingAmount() == null) {
 			List<CashMovementEntity> movements = cashMovementRepository.findBySessionOrderByMovementAtDesc(session);
 			liveOut = sumBySign(movements, -1);
 			liveIn = sumBySign(movements, 1);
+			liveSales = cashSales(session);
 		}
-		return cashMapper.toSession(session, liveOut, liveIn);
+		return cashMapper.toSession(session, liveSales, liveOut, liveIn);
+	}
+
+	/** Efectivo cobrado en ventas cerradas de esa planilla. */
+	private BigDecimal cashSales(CashSessionEntity session) {
+		BigDecimal sum = salePaymentRepository.sumCashBySession(session);
+		return (sum == null ? BigDecimal.ZERO : sum).setScale(2, RoundingMode.HALF_UP);
 	}
 
 	/** Suma los montos del signo pedido: -1 salidas, +1 ingresos. */

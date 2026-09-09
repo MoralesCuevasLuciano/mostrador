@@ -16,11 +16,15 @@ public class CashMapper {
 
 	/**
 	 * Planilla persistida → respuesta.
-	 * liveOut y liveIn se usan solo si la caja está abierta; también van en el DTO.
+	 * liveSales, liveOut y liveIn se usan solo si la caja está abierta.
 	 */
-	public CashSessionResponse toSession(CashSessionEntity session, BigDecimal liveOut, BigDecimal liveIn) {
+	public CashSessionResponse toSession(
+			CashSessionEntity session,
+			BigDecimal liveSales,
+			BigDecimal liveOut,
+			BigDecimal liveIn) {
 		boolean open = session.getClosingAmount() == null;
-		BigDecimal sales = open ? BigDecimal.ZERO : zeroIfNull(session.getTotalCashSales());
+		BigDecimal sales = open ? zeroIfNull(liveSales) : zeroIfNull(session.getTotalCashSales());
 		BigDecimal out = open ? zeroIfNull(liveOut) : zeroIfNull(session.getTotalCashOut());
 		BigDecimal in = open ? zeroIfNull(liveIn) : zeroIfNull(session.getTotalCashIn());
 		BigDecimal expected = session.getOpeningAmount().add(sales).add(out).add(in);

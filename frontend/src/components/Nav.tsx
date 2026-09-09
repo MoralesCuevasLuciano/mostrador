@@ -4,23 +4,27 @@ type NavProps = {
   listActive: boolean
   createActive: boolean
   inventoryActive: boolean
+  cashActive: boolean
   onList: () => void
   onCreate: () => void
   onInventory: () => void
+  onCash: () => void
   branches: Branch[]
   selectedBranchId: number | null
   onSelectBranch: (id: number) => void
   branchesLoading: boolean
 }
 
-/** Barra superior: catálogo, inventario y sucursal de trabajo. */
+/** Barra superior: caja, catálogo, inventario y sucursal de trabajo. */
 export function Nav({
   listActive,
   createActive,
   inventoryActive,
+  cashActive,
   onList,
   onCreate,
   onInventory,
+  onCash,
   branches,
   selectedBranchId,
   onSelectBranch,
@@ -29,6 +33,13 @@ export function Nav({
   return (
     <nav className="nav">
       <p className="nav-brand">Mostrador</p>
+      <button
+        type="button"
+        className={cashActive ? 'nav-link active' : 'nav-link'}
+        onClick={onCash}
+      >
+        Caja
+      </button>
       <button type="button" className={listActive ? 'nav-link active' : 'nav-link'} onClick={onList}>
         Productos
       </button>

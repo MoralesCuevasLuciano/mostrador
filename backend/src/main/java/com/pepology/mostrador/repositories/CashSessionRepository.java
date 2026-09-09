@@ -16,8 +16,11 @@ public interface CashSessionRepository extends JpaRepository<CashSessionEntity, 
 	/** La planilla de ese local en esa fecha, o vacío si todavía no se abrió. */
 	Optional<CashSessionEntity> findByBranchAndBusinessDate(BranchEntity branch, LocalDate businessDate);
 
-	/** Planillas de un local, de la más reciente a la más vieja. */
-	List<CashSessionEntity> findByBranchOrderByBusinessDateDesc(BranchEntity branch);
+	/** Planillas de un local en un rango de fechas (inclusive), de la más reciente a la más vieja. */
+	List<CashSessionEntity> findByBranchAndBusinessDateBetweenOrderByBusinessDateDesc(
+			BranchEntity branch,
+			LocalDate from,
+			LocalDate to);
 
 	/** La planilla anterior a esa fecha, para heredar el cierre como apertura. */
 	Optional<CashSessionEntity> findFirstByBranchAndBusinessDateLessThanOrderByBusinessDateDesc(

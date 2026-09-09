@@ -3,8 +3,14 @@
 ### Planilla de hoy
 GET http://localhost:8080/api/cash/1/today
 
-### Historial de planillas
-GET http://localhost:8080/api/cash/1/sessions
+### Historial de una semana
+GET http://localhost:8080/api/cash/1/sessions?from=2026-09-07&to=2026-09-13
+
+### Cajas abiertas
+GET http://localhost:8080/api/cash/1/open-sessions
+
+### Planilla anterior
+GET http://localhost:8080/api/cash/1/previous-session?before=2026-09-09
 
 ### Planilla de un día
 GET http://localhost:8080/api/cash/1/sessions/2026-09-08

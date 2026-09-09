@@ -2,7 +2,7 @@
 
 Sistema de gestión para un comercio polirrubro con dos sucursales: catálogo con variantes, control de stock por sucursal, ventas con promociones, facturación electrónica ante ARCA, liquidación de personal y arqueo de caja.
 
-Hoy están en marcha **el catálogo, el inventario y la API de caja**. Ventas, empleados y facturación siguen diseñados; la caja todavía no tiene pantalla.
+Hoy están en marcha **el catálogo, el inventario y la caja**. Ventas, empleados y facturación siguen diseñados.
 
 ## El problema
 
@@ -22,15 +22,15 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 - **Retiros de efectivo varias veces al día** por seguridad, mezclados con vales de empleados.
 - **Responsable inscripto** ante ARCA, con un punto de venta por sucursal.
 
-## Alcance (8 de septiembre de 2026)
+## Alcance (9 de septiembre de 2026)
 
 | Módulo | Estado |
 |---|---|
 | Catálogo y variantes | **Implementado.** Flyway V1–V2, API REST y UI (listado, alta, edición, baja) |
 | Sucursales | **Implementado.** API `/api/branches`; V3 carga las dos sucursales. Switch en la barra de la UI |
 | Inventario por sucursal | **Implementado.** Flyway V4, API `/api/stock` y pantalla Inventario |
-| Caja y arqueo | **API implementada.** Flyway V5–V6, `/api/cash`. Sin pantalla |
-| Ventas, pagos y promociones | Modelado (la venta necesita sesión de caja abierta) |
+| Caja y arqueo | **Implementado.** Flyway V5–V6, `/api/cash` y pantalla Caja |
+| Ventas y pagos | API en V7 (`/api/sales`) sin pantalla. Se retoma en el módulo de ventas |
 | Facturación electrónica | Modelado (ARCA `wsfe` + constancia de inscripción) |
 | Empleados y liquidaciones | Modelado |
 | Usuarios y permisos | Pendiente de diseñar |
@@ -41,11 +41,12 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 
 **Backend**
 
-- Tablas en MySQL: `branch`, `category`, `brand`, `product`, `product_variant`, `stock`, `stock_movement`, `cash_session`, `cash_movement`
-- Flyway: `V1` catálogo, `V2` `tracks_stock`, `V3` carga de sucursales, `V4` inventario, `V5` caja, `V6` `total_cash_in`
+- Tablas en MySQL: `branch`, `category`, `brand`, `product`, `product_variant`, `stock`, `stock_movement`, `cash_session`, `cash_movement`, `sale`, `sale_line`, `sale_payment`
+- Flyway: `V1` catálogo, `V2` `tracks_stock`, `V3` carga de sucursales, `V4` inventario, `V5` caja, `V6` `total_cash_in`, `V7` ventas
 - CRUD de marcas, categorías (rubro / subcategoría, máximo dos niveles), productos con variantes y sucursales
 - Inventario: recuento, entrada, consumo interno, extravío, traslado entre locales, saldo e historial
-- Caja: planilla del día por sucursal (abre heredando el cierre anterior), recuento de apertura, retiro / vale / gasto / ingreso, historial, corrección y baja de movimientos mientras está abierta, cierre que congela salidas e ingresos
+- Caja: planilla del día por sucursal (abre heredando el cierre anterior), recuento de apertura, retiro / vale / gasto / ingreso, historial por rango (máx. 62 días; la UI recorre semanas), corrección y baja de movimientos mientras está abierta, cierre que congela ventas en efectivo, salidas e ingresos
+- Ventas: API lista (`POST /api/sales`, tickets del día). Sin pantalla todavía
 - Baja y reactivación lógica (`is_active`)
 - SKU único generado (`MF-{productId}-{nn}`); código de barras **no único** (aviso al escanear o al salir del campo, no bloquea)
 - Precio, marca y barcode viven en la **variante**; el producto es el tipo de artículo
@@ -53,12 +54,13 @@ Estas particularidades del negocio explican buena parte de las decisiones del mo
 - IVA por defecto 21 %; flag de descuento de empleado; condición `NUEVA` / `DEFECTUOSA`
 - Subida de fotos (`/api/uploads`, máx. 5 MB)
 - Errores como `ProblemDetail` (`400` / `404` / `405` / `409` / `413`)
-- Tests unitarios de `BrandService`, `CategoryService`, `ProductService`, `BranchService`, `StockService`, `CashService` y `UploadService`
+- Tests unitarios de `BrandService`, `CategoryService`, `ProductService`, `BranchService`, `StockService`, `CashService`, `SaleService` y `UploadService`
 - Colecciones HTTP en `backend/http/`
 
 **Frontend**
 
-- Nav: Productos | Cargar producto | Inventario | sucursal de trabajo (arriba a la derecha, se recuerda al recargar)
+- Nav: Caja | Productos | Cargar producto | Inventario | sucursal de trabajo (arriba a la derecha, se recuerda al recargar)
+- Pantalla Caja: abrir la planilla del día, monto esperado, recuento de apertura, retiros / vales / gastos / ingresos, cierre. Historial por semana. Si hay una caja anterior abierta, pide cerrarla
 - Listado de productos activos; **Ver dados de baja** para los inactivos. Las variantes dadas de baja no se listan en la tarjeta
 - Alta y edición de producto (N variantes, foto, “Lleva inventario”)
 - En edición: botón **Variantes dadas de baja** (popup para reactivarlas)
@@ -93,7 +95,8 @@ mostrador/
 │       ├── V3__carga_sucursales.sql
 │       ├── V4__stock.sql
 │       ├── V5__caja.sql
-│       └── V6__caja_ingreso.sql
+│       ├── V6__caja_ingreso.sql
+│       └── V7__ventas.sql
 └── frontend/      React + Vite
 ```
 
@@ -122,7 +125,7 @@ spring:
     password: TU_PASSWORD
 ```
 
-Flyway corre las migraciones al arrancar (hoy hasta V6).
+Flyway corre las migraciones al arrancar (hoy hasta V7).
 
 ### 2. Backend
 
@@ -156,6 +159,7 @@ La UI queda en el puerto por defecto de Vite ([http://localhost:5173](http://loc
 | Sucursales | `/api/branches` |
 | Inventario | `/api/stock` |
 | Caja | `/api/cash` |
+| Ventas | `/api/sales` |
 | Fotos | `/api/uploads` |
 
 Operaciones típicas de catálogo y sucursales: `POST` alta, `GET` listado/detalle, `PUT` edición, `DELETE` baja lógica, `POST …/activate` reactivación.
@@ -178,7 +182,9 @@ Caja (la sucursal va en la URL; las fechas en ISO `yyyy-MM-dd`). `GET …/today`
 | Método | Ruta | Qué hace |
 |---|---|---|
 | `GET` | `/api/cash/{branchId}/today` | Planilla de hoy; la abre heredando el cierre anterior |
-| `GET` | `/api/cash/{branchId}/sessions` | Historial de planillas de ese local |
+| `GET` | `/api/cash/{branchId}/sessions?from=&to=` | Planillas de ese rango (máx. 62 días) |
+| `GET` | `/api/cash/{branchId}/open-sessions` | Cajas sin cerrar de ese local |
+| `GET` | `/api/cash/{branchId}/previous-session?before=` | La planilla anterior a esa fecha |
 | `GET` | `/api/cash/{branchId}/sessions/{date}` | Planilla de ese día |
 | `GET` | `/api/cash/{branchId}/sessions/{date}/movements` | Historial de movimientos |
 | `PUT` | `/api/cash/{branchId}/movements/{id}` | Corregir un movimiento (caja abierta) |
@@ -188,7 +194,14 @@ Caja (la sucursal va en la URL; las fechas en ISO `yyyy-MM-dd`). `GET …/today`
 | `POST` | `/api/cash/{branchId}/sessions/{date}/vales` | Vale |
 | `POST` | `/api/cash/{branchId}/sessions/{date}/expenses` | Gasto o pago a proveedor |
 | `POST` | `/api/cash/{branchId}/sessions/{date}/cash-ins` | Ingreso de efectivo |
-| `POST` | `/api/cash/{branchId}/sessions/{date}/close` | Cierre (congela salidas e ingresos) |
+| `POST` | `/api/cash/{branchId}/sessions/{date}/close` | Cierre (congela ventas en efectivo, salidas e ingresos) |
+
+Ventas (la sucursal va en la URL; el precio lo pone el servidor):
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| `POST` | `/api/sales/{branchId}` | Cobra un ticket en la caja abierta de hoy |
+| `GET` | `/api/sales/{branchId}/today` | Tickets de la planilla de hoy |
 
 También: `GET /api/products/barcode-matches?barcode=` — quién ya usa ese código (no bloquea el alta).
 
@@ -203,16 +216,17 @@ Los ids de sucursal no son fijos: `GET /api/branches` devuelve los reales (en un
 - Stock por **variante × sucursal**. Sin fila = nunca se inventarió. El saldo solo cambia si se persiste un movimiento. Puede quedar negativo.
 - Productos con `tracks_stock = false` no entran a inventario.
 - La sucursal de la barra es **dónde se trabaja**, no un filtro del catálogo.
-- Caja: una planilla por sucursal y fecha. Cerrada no se toca. El esperado y la diferencia se calculan; no se guardan. Con la caja abierta, salidas e ingresos van en vivo en el JSON.
+- Caja: una planilla por sucursal y fecha. Cerrada no se toca. El esperado y la diferencia se calculan; no se guardan. Con la caja abierta, ventas en efectivo, salidas e ingresos van en vivo en el JSON.
+- Venta: necesita caja abierta. El precio sale de la ficha, no del cliente. Si `tracks_stock` es verdadero, descuenta stock (puede quedar negativo).
 
-El resto de las decisiones —venta distinta del comprobante fiscal, caja por sesión y no por vendedor, promociones por lista explícita— está en [decisiones de diseño](docs/decisiones-de-diseno.md). Ventas y pantalla de caja todavía no están.
+El resto de las decisiones —venta distinta del comprobante fiscal, caja por sesión y no por vendedor, promociones por lista explícita— está en [decisiones de diseño](docs/decisiones-de-diseno.md). El módulo de ventas (pantalla, promociones, anulación) viene después.
 
 ## Plan de implementación
 
 Por fases, cada una utilizable por sí sola:
 
-1. **Catálogo e inventario.** Hecho: se carga el catálogo, se elige sucursal y se cuenta / mueve stock. Las ventas todavía no descuentan (tipos `VENTA` / `ANULACION_VENTA` existen en el enum, sin endpoint).
-2. **Caja.** API hecha; falta la pantalla. Después, **ventas**: reemplazan la planilla diaria y alimentan el arqueo (`total_cash_sales` hoy se congela en 0).
+1. **Catálogo e inventario.** Hecho: se carga el catálogo, se elige sucursal y se cuenta / mueve stock.
+2. **Caja.** Hecha: planilla del día, movimientos, cierre e historial por semana. **Ventas:** la API está, la pantalla se hace en el módulo de ventas.
 3. **Empleados y liquidaciones.** Bastante independiente del resto.
 4. **Facturación electrónica.** Se deja para cuando el resto ya esté rodando, porque depende de terceros (puntos de venta RECE y certificado ARCA).
 5. **Compras, devoluciones y permisos.**
@@ -221,6 +235,6 @@ La carga inicial del catálogo se piensa de forma incremental: los productos se 
 
 ## Documentación
 
-- [Modelo de datos](docs/modelo-de-datos.md) — las 22 tablas del diseño. En MySQL hoy existen las 9 de V1–V6.
+- [Modelo de datos](docs/modelo-de-datos.md) — las 22 tablas del diseño. En MySQL hoy existen las 12 de V1–V7.
 - [Decisiones de diseño](docs/decisiones-de-diseno.md) — qué se decidió, qué alternativas se evaluaron y por qué.
 - [Pendientes](docs/pendientes.md) — lo que falta modelar, lo que espera confirmación y lo que se postergó a propósito.

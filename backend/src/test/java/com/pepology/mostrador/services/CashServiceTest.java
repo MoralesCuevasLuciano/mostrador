@@ -9,6 +9,7 @@ import com.pepology.mostrador.models.entities.CashSessionEntity;
 import com.pepology.mostrador.models.enums.CashMovementType;
 import com.pepology.mostrador.repositories.CashMovementRepository;
 import com.pepology.mostrador.repositories.CashSessionRepository;
+import com.pepology.mostrador.repositories.SalePaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,8 @@ class CashServiceTest {
 	private CashMovementRepository cashMovementRepository;
 	@Mock
 	private BranchService branchService;
+	@Mock
+	private SalePaymentRepository salePaymentRepository;
 
 	private CashService cashService;
 	private BranchEntity branch;
@@ -57,6 +60,7 @@ class CashServiceTest {
 		cashService = new CashService(
 				cashSessionRepository,
 				cashMovementRepository,
+				salePaymentRepository,
 				branchService,
 				new CashMapper());
 		branch = BranchEntity.of("Sucursal 1", "Calle falsa 123", null, null);
@@ -64,6 +68,7 @@ class CashServiceTest {
 		lenient().when(branchService.requireActive(1L)).thenReturn(branch);
 		lenient().when(cashMovementRepository.findBySessionOrderByMovementAtDesc(any()))
 				.thenReturn(List.of());
+		lenient().when(salePaymentRepository.sumCashBySession(any())).thenReturn(BigDecimal.ZERO);
 		stubSaves();
 	}
 
@@ -224,6 +229,45 @@ class CashServiceTest {
 		assertEquals(0, session.totalCashOut().compareTo(new BigDecimal("-50.00")));
 		assertEquals(0, session.totalCashIn().compareTo(new BigDecimal("20.00")));
 		assertEquals(0, session.expectedAmount().compareTo(new BigDecimal("170.00")));
+	}
+
+	@Test
+	void listByBranchReturnsOnlyTheRange() {
+		CashSessionEntity inRange = CashSessionEntity.of(branch, DAY, new BigDecimal("100.00"));
+		ReflectionTestUtils.setField(inRange, "id", 10L);
+		when(cashSessionRepository.findByBranchAndBusinessDateBetweenOrderByBusinessDateDesc(
+				branch, DAY.minusDays(1), DAY.plusDays(1)))
+				.thenReturn(List.of(inRange));
+
+		var listed = cashService.listByBranch(1L, DAY.minusDays(1), DAY.plusDays(1));
+
+		assertEquals(1, listed.size());
+		assertEquals(DAY, listed.getFirst().businessDate());
+	}
+
+	@Test
+	void listByBranchRejectsInvertedRange() {
+		assertThrows(BusinessRuleException.class, () -> cashService.listByBranch(1L, DAY, DAY.minusDays(1)));
+	}
+
+	@Test
+	void listByBranchRejectsRangeLongerThan62Days() {
+		assertThrows(BusinessRuleException.class,
+				() -> cashService.listByBranch(1L, DAY, DAY.plusDays(62)));
+	}
+
+	@Test
+	void previousReturnsLastSessionBeforeDate() {
+		CashSessionEntity previous = CashSessionEntity.of(branch, DAY.minusDays(1), new BigDecimal("80.00"));
+		previous.setClosingAmount(new BigDecimal("80.00"));
+		ReflectionTestUtils.setField(previous, "id", 9L);
+		when(cashSessionRepository.findFirstByBranchAndBusinessDateLessThanOrderByBusinessDateDesc(branch, DAY))
+				.thenReturn(Optional.of(previous));
+
+		var response = cashService.previous(1L, DAY);
+
+		assertEquals(DAY.minusDays(1), response.businessDate());
+		assertEquals(0, response.closingAmount().compareTo(new BigDecimal("80.00")));
 	}
 
 	@Test

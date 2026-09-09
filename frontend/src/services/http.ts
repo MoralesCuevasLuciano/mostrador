@@ -19,6 +19,18 @@ export async function getJson<T>(path: string, fallback: string): Promise<T> {
   return response.json()
 }
 
+/** GET JSON que trata el 404 como “no hay”. Cualquier otro error se lanza. */
+export async function getJsonOrNull<T>(path: string, fallback: string): Promise<T | null> {
+  const response = await fetch(path)
+  if (response.status === 404) {
+    return null
+  }
+  if (!response.ok) {
+    throw new Error(await readError(response, fallback))
+  }
+  return response.json()
+}
+
 /** POST/PUT/DELETE con JSON. Tolera respuestas vacías (204). */
 export async function sendJson<T>(
   path: string,

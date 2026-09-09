@@ -6,9 +6,9 @@ Cinco categorías: lo que falta implementar del esqueleto, mejoras del código q
 
 ## Implementación en curso
 
-**Hecho (catálogo + sucursales + inventario + API de caja).** Flyway V1–V6. API de marcas, categorías, productos, sucursales, stock y caja. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario (sin contar / ya contado, recuento, entrada, consumo, extravío, traslado, historial). Caja todavía no tiene pantalla.
+**Hecho (catálogo + sucursales + inventario + caja).** Flyway V1–V7. API de marcas, categorías, productos, sucursales, stock, caja y ventas. Frontend: listado/alta/edición/baja de productos, gestión de marcas y categorías, switch de sucursal, pantalla Inventario, pantalla Caja (abrir, esperado, recuento, movimientos, cierre, historial por semana). La API de ventas no tiene pantalla.
 
-**Siguiente bloque: pantalla de caja y después ventas.** La venta necesita sesión abierta, por eso va segunda. Cuando exista, va a persistir movimientos `VENTA` / `ANULACION_VENTA` (el enum ya está; no hay endpoint) y a congelar `total_cash_sales` de verdad (hoy queda 0 al cerrar). `sale_id` y `registered_by` en `stock_movement` no están en V4: se agregan cuando existan `sale` y `employee`. `opened_by`, `closed_by`, `employee_id` y `registered_by` de caja se agregan cuando exista `employee`. El vale todavía no genera la fila en la cuenta del empleado.
+**Siguiente bloque: módulo de ventas.** POS, promociones, descuento empleado, anulación. El cobro ya puede vivir en `/api/sales` cuando se arme la UI. `sale_id` y `registered_by` en `stock_movement` todavía no están en V4. `opened_by`, `closed_by`, `employee_id` y `registered_by` de caja se agregan cuando exista `employee`. El vale todavía no genera la fila en la cuenta del empleado. El cierre ya congela `total_cash_sales` con lo cobrado en efectivo.
 
 **Inventario que queda para más adelante.** `min_quantity` está en la tabla y no se edita en la UI. Ventas que dejen saldo negativo (la regla ya está: no se bloquea).
 

@@ -1,0 +1,30 @@
+# Ventas del mostrador (cambiar branchId y variantId).
+### Tickets de hoy
+GET http://localhost:8080/api/sales/3/today
+
+### Cobrar en efectivo
+POST http://localhost:8080/api/sales/3
+Content-Type: application/json
+
+{
+  "lines": [
+    { "variantId": 1, "quantity": 1 }
+  ],
+  "payments": [
+    { "method": "EFECTIVO", "amount": 8400.00 }
+  ]
+}
+
+### Cobro mixto
+POST http://localhost:8080/api/sales/3
+Content-Type: application/json
+
+{
+  "lines": [
+    { "variantId": 1, "quantity": 2 }
+  ],
+  "payments": [
+    { "method": "EFECTIVO", "amount": 8000.00 },
+    { "method": "DEBITO", "amount": 8800.00 }
+  ]
+}

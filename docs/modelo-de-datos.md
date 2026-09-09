@@ -2,7 +2,7 @@
 
 22 tablas agrupadas en siete bloques. Este documento es el contrato del esquema. Las tablas se crean con migraciones Flyway en `backend/src/main/resources/db/migration/`. Hibernate no genera el esquema (`ddl-auto: validate`).
 
-**En MySQL hoy (V1–V4):** `branch`, `category`, `brand`, `product`, `product_variant`, `stock`, `stock_movement`. El resto de este documento es diseño: todavía no tiene migración.
+**En MySQL hoy (V1–V7):** `branch`, `category`, `brand`, `product`, `product_variant`, `stock`, `stock_movement`, `cash_session`, `cash_movement`, `sale`, `sale_line`, `sale_payment`. El resto de este documento es diseño: todavía no tiene migración.
 
 Convenciones: nombres en `snake_case` y singular, claves foráneas como `tabla_id`, baja lógica con `is_active`, y `created_at` / `updated_at` en todas las tablas (no se repiten en los listados de abajo).
 
@@ -143,7 +143,7 @@ El historial que explica el saldo. **V4 ya existe** (sin `sale_id` ni `registere
 | sale_id | FK → sale | no | no (cuando exista venta) |
 | registered_by | FK → employee | no | no (cuando exista empleado) |
 
-- `movement_type` — valores actuales: `VENTA`, `ANULACION_VENTA`, `AJUSTE_INICIAL`, `AJUSTE_RECUENTO`, `CONSUMO_INTERNO`, `TRASLADO`, `ENTRADA`, `EXTRAVÍO`. Hoy la API usa todos menos venta / anulación.
+- `movement_type` — valores actuales: `VENTA`, `ANULACION_VENTA`, `AJUSTE_INICIAL`, `AJUSTE_RECUENTO`, `CONSUMO_INTERNO`, `TRASLADO`, `ENTRADA`, `EXTRAVÍO`. La API usa `VENTA` al cobrar; `ANULACION_VENTA` todavía no.
 - `quantity` — con signo: negativo cuando sale, positivo cuando entra.
 - `related_movement_id` — vincula las dos patas de un traslado entre sucursales.
 
@@ -244,6 +244,8 @@ Una quincena pagada mitad en efectivo y mitad por transferencia son dos filas. E
 ---
 
 ## Ventas
+
+En V7 existen `sale`, `sale_line` y `sale_payment`, sin `employee_id`, `customer_id`, `fiscal_document_id`, `replaces_sale_id`, `discount_authorized_by`, `promotion_id` ni campos de confirmación de pago. La API cobra tickets `NORMAL` / `CERRADA`.
 
 ### sale
 
@@ -453,7 +455,9 @@ La planilla del día. Una por sucursal y fecha, con único sobre esa combinació
 
 En V5–V6 todavía no están `opened_by`, `closed_by`, `employee_id` ni `registered_by`: esperan a `employee`.
 
-El **monto esperado** y la **diferencia** no se guardan: se derivan de la apertura, las ventas, las salidas, los ingresos y el conteo. Mientras la caja está abierta, la API muestra salidas e ingresos en vivo; al cerrar se persisten.
+El **monto esperado** y la **diferencia** no se guardan: se derivan de la apertura, las ventas, las salidas, los ingresos y el conteo. Mientras la caja está abierta, la API muestra ventas en efectivo, salidas e ingresos en vivo; al cerrar se persisten.
+
+El historial de planillas se consulta por rango de fechas (hasta 62 días). La pantalla recorre semanas (lunes a domingo).
 
 El "total tarjetas" y la facturación del día tampoco se guardan: son reportes que se calculan sumando las ventas.
 
